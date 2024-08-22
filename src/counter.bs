@@ -114,7 +114,7 @@ Comparison: [https://godbolt.org/z/vM7xsPE3M](https://godbolt.org/z/vM7xsPE3M)
 ## Precompiled Headers
 
 MSVC and GCC save the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
-expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.
+expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.
 
 This paper proposes no change to the current behavior.
 
@@ -136,9 +136,9 @@ import "header.hpp"
 int NEW_VAR(x); // x0
 ```
 
-There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though potential for problems
-is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no such
-restriction is proposed in this proposal.
+There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though the potential for
+problems is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no
+such restriction is proposed in this proposal.
 
 This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
 clear benefit.
