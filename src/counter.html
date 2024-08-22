@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="2241e6645eb452bc63a54d24fa80518c28b4ee79" name="document-revision">
+  <meta content="7a55cb3489e412d8c72da70e5c6e203038da1e9b" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2224,7 +2224,7 @@ is primarily useful for generating unique identifiers with preprocessor macros.<
    <h2 class="heading settled" data-level="4" id="design-considerations"><span class="secno">4. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
    <h3 class="heading settled" data-level="4.1" id="precompiled-headers"><span class="secno">4.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
    <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
-expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.</p>
+expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.</p>
    <p>This paper proposes no change to the current behavior.</p>
    <h3 class="heading settled" data-level="4.2" id="modules"><span class="secno">4.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
    <p>GCC and MSVC do not propagate <code class="highlight"><c- n>__COUNTER__</c-></code> across modules, including for header units. The following compiles with a
@@ -2240,9 +2240,9 @@ linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-
 <c- k>import</c-> <c- s>"header.hpp"</c->
 <c- b>int</c-> <c- n>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>);</c-> <c- c1>// x0</c->
 </pre>
-   <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though potential for problems
-is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no such
-restriction is proposed in this proposal.</p>
+   <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though the potential for
+problems is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no
+such restriction is proposed in this proposal.</p>
    <p>This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
 clear benefit.</p>
    <h3 class="heading settled" data-level="4.3" id="odr"><span class="secno">4.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
