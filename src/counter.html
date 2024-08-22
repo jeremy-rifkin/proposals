@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>PxxxxR0: &lt;code>__COUNTER__&lt;/code></title>
+  <title>PnnnnR0: __COUNTER__</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1564,7 +1564,21 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="20c28f9e57ac549c63a98f31b16428cab75ee4b0" name="document-revision">
+  <meta content="2241e6645eb452bc63a54d24fa80518c28b4ee79" name="document-revision">
+<style>
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid white;
+}
+tbody tr:nth-child(even) {
+    background: #111;
+}
+</style>
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2091,7 +2105,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="p-name no-ref" id="title">PxxxxR0<br><code class="highlight"><c- n>__COUNTER__</c-></code></h1>
+   <h1 class="p-name no-ref" id="title">PnnnnR0<br><code class="highlight"><c- n>__COUNTER__</c-></code></h1>
    <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">New Proposal, <time class="dt-updated" datetime="2024-08-21">2024-08-21</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
@@ -2110,7 +2124,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   </div>
   <div class="p-summary" data-fill-with="abstract">
    <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
-   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a common predefined macro provided as a language extension by all major C and C++
+   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a widely-used predefined macro provided as a language extension by all major C and C++
 
           implementations. This paper aims to standardize existing practices.</p>
   </div>
@@ -2126,6 +2140,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <li><a href="#precompiled-headers"><span class="secno">4.1</span> <span class="content">Precompiled Headers</span></a>
       <li><a href="#modules"><span class="secno">4.2</span> <span class="content">Modules</span></a>
       <li><a href="#odr"><span class="secno">4.3</span> <span class="content">ODR</span></a>
+      <li><a href="#range-and-overflow"><span class="secno">4.4</span> <span class="content">Range and Overflow</span></a>
      </ol>
     <li><a href="#proposed-wording"><span class="secno">5</span> <span class="content">Proposed Wording</span></a>
     <li>
@@ -2137,9 +2152,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   </nav>
   <main>
    <h2 class="heading settled" data-level="1" id="introduction"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
-   <p>The <code class="highlight"><c- n>__COUNTER__</c-></code> pre-defined macro is a common language extension for C and C++ which expands to an integer literal
-starting at <code class="highlight"><c- mi>0</c-></code> and incrementing by <code class="highlight"><c- mi>1</c-></code> every time it expanded in a translation unit. This a widely used, albeit niche,
-utility that is useful for generating unique identifiers with preprocessor macros.</p>
+   <p>The <code class="highlight"><c- n>__COUNTER__</c-></code> pre-defined macro is a language extension for C and C++ which expands to an integer literal that
+starts at <code class="highlight"><c- mi>0</c-></code> and increments by <code class="highlight"><c- mi>1</c-></code> every time it expanded in a translation unit. This is a widely-used utility that
+is primarily useful for generating unique identifiers with preprocessor macros.</p>
    <h2 class="heading settled" data-level="2" id="motivating-examples"><span class="secno">2. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
    <p>A brief survey of some uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the C and C++ community:</p>
    <ul>
@@ -2165,11 +2180,12 @@ utility that is useful for generating unique identifiers with preprocessor macro
    <h2 class="heading settled" data-level="3" id="implementation-support"><span class="secno">3. </span><span class="content">Implementation Support</span><a class="self-link" href="#implementation-support"></a></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> has long been supported by all major implementations of C and C++:</p>
    <table>
-    <tbody>
+    <thead>
      <tr>
       <th>Compiler
       <th>Earliest Version Tested
       <th>Earliest Version Tested<br>Supporting <code class="highlight"><c- n>__COUNTER__</c-></code>
+    <tbody>
      <tr>
       <td>GCC
       <td>3.4.6 ❌
@@ -2207,8 +2223,9 @@ utility that is useful for generating unique identifiers with preprocessor macro
    <p>Comparison: <a href="https://godbolt.org/z/vM7xsPE3M">https://godbolt.org/z/vM7xsPE3M</a></p>
    <h2 class="heading settled" data-level="4" id="design-considerations"><span class="secno">4. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
    <h3 class="heading settled" data-level="4.1" id="precompiled-headers"><span class="secno">4.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
-   <p>MSVC remembers the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
+   <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
 expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.</p>
+   <p>This paper proposes no change to the current behavior.</p>
    <h3 class="heading settled" data-level="4.2" id="modules"><span class="secno">4.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
    <p>GCC and MSVC do not propagate <code class="highlight"><c- n>__COUNTER__</c-></code> across modules, including for header units. The following compiles with a
 linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-></code>:</p>
@@ -2226,6 +2243,8 @@ linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-
    <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though potential for problems
 is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no such
 restriction is proposed in this proposal.</p>
+   <p>This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
+clear benefit.</p>
    <h3 class="heading settled" data-level="4.3" id="odr"><span class="secno">4.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
    <p>It’s possible to accidentally violate ODR with <code class="highlight"><c- n>__COUNTER__</c-></code>:</p>
 <pre class="language-cpp highlight"><c- c1>// foo.hpp</c->
@@ -2245,21 +2264,27 @@ restriction is proposed in this proposal.</p>
 </pre>
    <p>Current implementations do not make any special attempt to diagnose or prevent such use of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond existing
 ODR diagnostics. Similar ODR issues can occur as a result of <code class="highlight"><c- n>__DATE__</c-></code> and <code class="highlight"><c- n>__TIME__</c-></code>.</p>
+   <h3 class="heading settled" data-level="4.4" id="range-and-overflow"><span class="secno">4.4. </span><span class="content">Range and Overflow</span><a class="self-link" href="#range-and-overflow"></a></h3>
+   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is implemented with an <code class="highlight"><c- b>unsigned</c-></code> counter in GCC and Clang and both implementations wrap around to zero
+when that counter overflows. This paper recommends <code class="highlight"><c- n>__COUNTER__</c-></code> shall be able to attain a value of at
+least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an overflow behavior of wrapping to zero.</p>
    <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
    <p>Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 1:</p>
    <blockquote>
     <ul>
      <li>
-      <ins><code class="highlight"><c- n>__COUNTER__</c-></code><br>An integer literal starting at <code class="highlight"><c- mi>0</c-></code> and incrementing by <code class="highlight"><c- mi>1</c-></code> each time <code class="highlight"><c- n>__COUNTER__</c-></code> expanded.</ins>
+      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> An integer literal that starts at <code class="highlight"><c- mi>0</c-></code> and increments by <code class="highlight"><c- mi>1</c-></code> each time <code class="highlight"><c- n>__COUNTER__</c-></code> is expanded. <code class="highlight"><c- n>__COUNTER__</c-></code> shall have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>.
+                If the value of <code class="highlight"><c- n>__COUNTER__</c-></code> exceeds its implementation-defined maximum value it shall reset to zero. </ins>
     </ul>
    </blockquote>
    <p>Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> after the row for <code class="highlight"><c- n>__cpp_constinit</c-></code>:</p>
    <table>
-    <tbody>
+    <thead>
      <tr>
       <th>Macro name
       <th>Value
+    <tbody>
      <tr>
       <td>
        <ins><code class="highlight"><c- n>__cpp_counter</c-></code></ins>
