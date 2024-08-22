@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="580c9dc494a56b73d90e9457c5e276e4771e2c33" name="document-revision">
+  <meta content="20c28f9e57ac549c63a98f31b16428cab75ee4b0" name="document-revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2141,7 +2141,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 starting at <code class="highlight"><c- mi>0</c-></code> and incrementing by <code class="highlight"><c- mi>1</c-></code> every time it expanded in a translation unit. This a widely used, albeit niche,
 utility that is useful for generating unique identifiers with preprocessor macros.</p>
    <h2 class="heading settled" data-level="2" id="motivating-examples"><span class="secno">2. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
-   <p>A brief survey of <code class="highlight"><c- n>__COUNTER__</c-></code> use in the C and C++ community:</p>
+   <p>A brief survey of some uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the C and C++ community:</p>
    <ul>
     <li data-md>
      <p>Google benchmark uses <code class="highlight"><c- n>__COUNTER__</c-></code> for <a href="https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538">unique identifiers</a>, falling back to <code class="highlight"><c- n>__LINE__</c-></code> if <code class="highlight"><c- n>__COUNTER__</c-></code> isn’t present or doesn’t behave as expected</p>
