@@ -4,11 +4,13 @@ Group: WG21
 Shortname: Pxxxx
 Revision: 0
 Status: NP
-Date: 2024-08-20
+Date: 2024-08-21
 Editor: Jeremy Rifkin
-Abstract: `__COUNTER__` is a common predefined macro provided as a language extension by all major implementations. This paper aims to standardize existing practices.
+Abstract: `__COUNTER__` is a common predefined macro provided as a language extension by all major C and C++
+          implementations. This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
-ED: github.com
+ED: placeholder
+!Source: [https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs](https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs)
 </pre>
 
 # Introduction
@@ -19,14 +21,14 @@ utility that is useful for generating unique identifiers with preprocessor macro
 
 # Motivating Examples
 
-A brief survey of `__COUNTER__` use in the C and C++ community:
+A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 
 - Google benchmark uses `__COUNTER__` for [unique identifiers](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538), falling back to `__LINE__` if `__COUNTER__` isn't present or doesn't behave as expected
 - Google Orbit uses `__COUNTER__` for [unique identifiers](https://github.com/google/orbit/blob/d863597a5c15cd0930bf9dd63b0451e2327e105e/src/ApiInterface/include/ApiInterface/Orbit.h#L411)
 - LLVM uses `__COUNTER__` for [unique identifiers](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/builtins/int_util.h#L26) as well as in sanitizer code to [prevent ICF](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/sanitizer_common/sanitizer_win_dll_thunk.h#L55)
 - Catch2 uses `__COUNTER__` for [unique identifiers](https://github.com/catchorg/Catch2/blob/fa306fc85eca7cc68a5362c503019fa823cbe411/src/catch2/internal/catch_unique_name.hpp#L15), falling back to `__LINE__`
 - Tensorflow uses `__COUNTER__` extensively, primarily for [unique identifiers](https://github.com/tensorflow/tensorflow/blob/58ee1a52795980c22ea154395ad17e09683ebff8/tensorflow/c/tf_status_helper.h#L50)
-- Chromium uses `__COUNTER__` for unique identifier generation, e.g. in [crash logging code](https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180), as well as for creating [unique tags for `ABORT()`s](https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34)
+- Chromium uses `__COUNTER__` for unique identifier generation, e.g. in [crash logging code](https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180), as well as for creating <a href="https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34">unique tags for `ABORT()`s</a>
 - Folly uses `__COUNTER__` for [unique identifiers](https://github.com/facebook/folly/blob/4550c4cd46a91e7bef9d348cad91dd1b07a876c8/folly/Preprocessor.h#L82-L103), falling back to `__LINE__` if not present
 - v8 uses `__COUNTER__` for [unique identifiers](https://github.com/v8/v8/blob/04c9912de3373fa4779890fa70bf5bae670c61c8/src/base/macros.h#L24)
 - Metric Panda Games uses `__COUNTER__` for [lookup tables](https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/) as part of a localization and compile-time string hashing system.
@@ -87,6 +89,59 @@ A brief survey of `__COUNTER__` use in the C and C++ community:
 
 Comparison: [https://godbolt.org/z/vM7xsPE3M](https://godbolt.org/z/vM7xsPE3M)
 
+# Design Considerations
+
+## Precompiled Headers
+
+MSVC remembers the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
+expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.
+
+## Modules
+
+GCC and MSVC do not propagate `__COUNTER__` across modules, including for header units. The following compiles with a
+linker error due to multiple definitions of `x0`:
+
+```cpp
+// header.hpp
+#define CONCAT_IMPL(x, y) x##y
+#define CONCAT(x, y) CONCAT_IMPL(x, y)
+#define NEW_VAR(name) CONCAT(name, __COUNTER__)
+int NEW_VAR(x); // x0
+int NEW_VAR(x); // x1
+
+// main.cpp
+import "header.hpp"
+int NEW_VAR(x); // x0
+```
+
+There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though potential for problems
+is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no such
+restriction is proposed in this proposal.
+
+## ODR
+
+It's possible to accidentally violate ODR with `__COUNTER__`:
+
+```cpp
+// foo.hpp
+#define CONCAT_IMPL(x, y) x##y
+#define CONCAT(x, y) CONCAT_IMPL(x, y)
+#define NEW_VAR(name) CONCAT(name, __COUNTER__)
+inline void foo() {
+    int NEW_VAR(x) = 2;
+}
+
+// a.cpp
+#include "foo.hpp"
+
+// b.cpp
+int x = __COUNTER__;
+#include "foo.hpp"
+```
+
+Current implementations do not make any special attempt to diagnose or prevent such use of `__COUNTER__` beyond existing
+ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`.
+
 # Proposed Wording
 
 Proposed wording relative to [[!N4950]]:
@@ -99,17 +154,16 @@ Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.
 </ul>
 </blockquote>
 
-# Design Considerations
+Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a>
+after the row for `__cpp_constinit`:
 
-## Precompiled Headers
-
-MSVC remembers the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
-expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.
-
-## Modules
-
-TODO
-
-## ODR
-
-TODO
+<table>
+    <tr>
+        <th>Macro name</th>
+        <th>Value</th>
+    </tr>
+    <tr>
+        <td><ins>`__cpp_counter`</ins></td>
+        <td><ins>`20XXXXL`</ins></td>
+    </tr>
+</table>
