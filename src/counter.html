@@ -1562,9 +1562,9 @@ Possible extra rowspan handling
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
-  <link href="github.com" rel="canonical">
+  <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="aa2e2199c04057449c06b400a062b492a8af8360" name="document-revision">
+  <meta content="580c9dc494a56b73d90e9457c5e276e4771e2c33" name="document-revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2092,15 +2092,17 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">PxxxxR0<br><code class="highlight"><c- n>__COUNTER__</c-></code></h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">New Proposal, <time class="dt-updated" datetime="2024-08-20">2024-08-20</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">New Proposal, <time class="dt-updated" datetime="2024-08-21">2024-08-21</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
-     <dd><a class="u-url" href="github.com">github.com</a>
+     <dd><a class="u-url" href="placeholder">placeholder</a>
      <dt class="editor">Author:
      <dd class="editor p-author h-card vcard"><span class="p-name fn">Jeremy Rifkin</span>
      <dt>Project:
      <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
+     <dt>Source:
+     <dd><a href="https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs">https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs</a>
     </dl>
    </div>
    <div data-fill-with="warning"></div>
@@ -2108,7 +2110,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   </div>
   <div class="p-summary" data-fill-with="abstract">
    <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
-   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a common predefined macro provided as a language extension by all major implementations. This paper aims to standardize existing practices.</p>
+   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a common predefined macro provided as a language extension by all major C and C++
+
+          implementations. This paper aims to standardize existing practices.</p>
   </div>
   <nav data-fill-with="table-of-contents" id="toc">
    <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
@@ -2116,14 +2120,14 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li><a href="#introduction"><span class="secno">1</span> <span class="content">Introduction</span></a>
     <li><a href="#motivating-examples"><span class="secno">2</span> <span class="content">Motivating Examples</span></a>
     <li><a href="#implementation-support"><span class="secno">3</span> <span class="content">Implementation Support</span></a>
-    <li><a href="#proposed-wording"><span class="secno">4</span> <span class="content">Proposed Wording</span></a>
     <li>
-     <a href="#design-considerations"><span class="secno">5</span> <span class="content">Design Considerations</span></a>
+     <a href="#design-considerations"><span class="secno">4</span> <span class="content">Design Considerations</span></a>
      <ol class="toc">
-      <li><a href="#precompiled-headers"><span class="secno">5.1</span> <span class="content">Precompiled Headers</span></a>
-      <li><a href="#modules"><span class="secno">5.2</span> <span class="content">Modules</span></a>
-      <li><a href="#odr"><span class="secno">5.3</span> <span class="content">ODR</span></a>
+      <li><a href="#precompiled-headers"><span class="secno">4.1</span> <span class="content">Precompiled Headers</span></a>
+      <li><a href="#modules"><span class="secno">4.2</span> <span class="content">Modules</span></a>
+      <li><a href="#odr"><span class="secno">4.3</span> <span class="content">ODR</span></a>
      </ol>
+    <li><a href="#proposed-wording"><span class="secno">5</span> <span class="content">Proposed Wording</span></a>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
@@ -2150,7 +2154,7 @@ utility that is useful for generating unique identifiers with preprocessor macro
     <li data-md>
      <p>Tensorflow uses <code class="highlight"><c- n>__COUNTER__</c-></code> extensively, primarily for <a href="https://github.com/tensorflow/tensorflow/blob/58ee1a52795980c22ea154395ad17e09683ebff8/tensorflow/c/tf_status_helper.h#L50">unique identifiers</a></p>
     <li data-md>
-     <p>Chromium uses <code class="highlight"><c- n>__COUNTER__</c-></code> for unique identifier generation, e.g. in <a href="https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180">crash logging code</a>, as well as for creating [unique tags for <code class="highlight"><c- n>ABORT</c-><c- p>()</c-></code>s](https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34)</p>
+     <p>Chromium uses <code class="highlight"><c- n>__COUNTER__</c-></code> for unique identifier generation, e.g. in <a href="https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180">crash logging code</a>, as well as for creating <a href="https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34">unique tags for <code class="highlight"><c- n>ABORT</c-><c- p>()</c-></code>s</a></p>
     <li data-md>
      <p>Folly uses <code class="highlight"><c- n>__COUNTER__</c-></code> for <a href="https://github.com/facebook/folly/blob/4550c4cd46a91e7bef9d348cad91dd1b07a876c8/folly/Preprocessor.h#L82-L103">unique identifiers</a>, falling back to <code class="highlight"><c- n>__LINE__</c-></code> if not present</p>
     <li data-md>
@@ -2201,7 +2205,47 @@ utility that is useful for generating unique identifiers with preprocessor macro
    </table>
    <p>*: Supported only in <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code> mode</p>
    <p>Comparison: <a href="https://godbolt.org/z/vM7xsPE3M">https://godbolt.org/z/vM7xsPE3M</a></p>
-   <h2 class="heading settled" data-level="4" id="proposed-wording"><span class="secno">4. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
+   <h2 class="heading settled" data-level="4" id="design-considerations"><span class="secno">4. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
+   <h3 class="heading settled" data-level="4.1" id="precompiled-headers"><span class="secno">4.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
+   <p>MSVC remembers the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
+expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.</p>
+   <h3 class="heading settled" data-level="4.2" id="modules"><span class="secno">4.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
+   <p>GCC and MSVC do not propagate <code class="highlight"><c- n>__COUNTER__</c-></code> across modules, including for header units. The following compiles with a
+linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-></code>:</p>
+<pre class="language-cpp highlight"><c- c1>// header.hpp</c->
+<c- cp>#define CONCAT_IMPL(x, y) x##y</c->
+<c- cp>#define CONCAT(x, y) CONCAT_IMPL(x, y)</c->
+<c- cp>#define NEW_VAR(name) CONCAT(name, __COUNTER__)</c->
+<c- b>int</c-> <c- nf>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>);</c-> <c- c1>// x0</c->
+<c- b>int</c-> <c- nf>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>);</c-> <c- c1>// x1</c->
+
+<c- c1>// main.cpp</c->
+<c- k>import</c-> <c- s>"header.hpp"</c->
+<c- b>int</c-> <c- n>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>);</c-> <c- c1>// x0</c->
+</pre>
+   <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though potential for problems
+is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no such
+restriction is proposed in this proposal.</p>
+   <h3 class="heading settled" data-level="4.3" id="odr"><span class="secno">4.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
+   <p>It’s possible to accidentally violate ODR with <code class="highlight"><c- n>__COUNTER__</c-></code>:</p>
+<pre class="language-cpp highlight"><c- c1>// foo.hpp</c->
+<c- cp>#define CONCAT_IMPL(x, y) x##y</c->
+<c- cp>#define CONCAT(x, y) CONCAT_IMPL(x, y)</c->
+<c- cp>#define NEW_VAR(name) CONCAT(name, __COUNTER__)</c->
+<c- kr>inline</c-> <c- b>void</c-> <c- nf>foo</c-><c- p>()</c-> <c- p>{</c->
+    <c- b>int</c-> <c- n>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>)</c-> <c- o>=</c-> <c- mi>2</c-><c- p>;</c->
+<c- p>}</c->
+
+<c- c1>// a.cpp</c->
+<c- cp>#include</c-> "foo.hpp"
+
+<c- c1>// b.cpp</c->
+<c- b>int</c-> <c- n>x</c-> <c- o>=</c-> <c- n>__COUNTER__</c-><c- p>;</c->
+<c- cp>#include</c-> "foo.hpp"
+</pre>
+   <p>Current implementations do not make any special attempt to diagnose or prevent such use of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond existing
+ODR diagnostics. Similar ODR issues can occur as a result of <code class="highlight"><c- n>__DATE__</c-></code> and <code class="highlight"><c- n>__TIME__</c-></code>.</p>
+   <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
    <p>Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 1:</p>
    <blockquote>
@@ -2210,14 +2254,18 @@ utility that is useful for generating unique identifiers with preprocessor macro
       <ins><code class="highlight"><c- n>__COUNTER__</c-></code><br>An integer literal starting at <code class="highlight"><c- mi>0</c-></code> and incrementing by <code class="highlight"><c- mi>1</c-></code> each time <code class="highlight"><c- n>__COUNTER__</c-></code> expanded.</ins>
     </ul>
    </blockquote>
-   <h2 class="heading settled" data-level="5" id="design-considerations"><span class="secno">5. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
-   <h3 class="heading settled" data-level="5.1" id="precompiled-headers"><span class="secno">5.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
-   <p>MSVC remembers the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
-expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.</p>
-   <h3 class="heading settled" data-level="5.2" id="modules"><span class="secno">5.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
-   <p>TODO</p>
-   <h3 class="heading settled" data-level="5.3" id="odr"><span class="secno">5.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
-   <p>TODO</p>
+   <p>Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> after the row for <code class="highlight"><c- n>__cpp_constinit</c-></code>:</p>
+   <table>
+    <tbody>
+     <tr>
+      <th>Macro name
+      <th>Value
+     <tr>
+      <td>
+       <ins><code class="highlight"><c- n>__cpp_counter</c-></code></ins>
+      <td>
+       <ins><code class="highlight"><c- mi>20</c-><c- n>XXXXL</c-></code></ins>
+   </table>
   </main>
 <script>
 (function() {
