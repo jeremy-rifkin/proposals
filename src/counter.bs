@@ -1,12 +1,13 @@
 <pre class='metadata'>
-Title: <code>__COUNTER__</code>
+Title: __COUNTER__
+H1: <code>__COUNTER__</code>
 Group: WG21
-Shortname: Pxxxx
+Shortname: Pnnnn
 Revision: 0
 Status: NP
 Date: 2024-08-21
 Editor: Jeremy Rifkin
-Abstract: `__COUNTER__` is a common predefined macro provided as a language extension by all major C and C++
+Abstract: `__COUNTER__` is a widely-used predefined macro provided as a language extension by all major C and C++
           implementations. This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
 ED: placeholder
@@ -15,9 +16,9 @@ ED: placeholder
 
 # Introduction
 
-The `__COUNTER__` pre-defined macro is a common language extension for C and C++ which expands to an integer literal
-starting at `0` and incrementing by `1` every time it expanded in a translation unit. This a widely used, albeit niche,
-utility that is useful for generating unique identifiers with preprocessor macros.
+The `__COUNTER__` pre-defined macro is a language extension for C and C++ which expands to an integer literal that
+starts at `0` and increments by `1` every time it expanded in a translation unit. This is a widely-used utility that
+is primarily useful for generating unique identifiers with preprocessor macros.
 
 # Motivating Examples
 
@@ -37,52 +38,71 @@ A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 
 `__COUNTER__` has long been supported by all major implementations of C and C++:
 
+<style>
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid white;
+}
+tbody tr:nth-child(even) {
+    background: #111;
+}
+</style>
+
 <table>
-    <tr>
-        <th>Compiler</th>
-        <th>Earliest Version Tested</th>
-        <th>Earliest Version Tested<br/>Supporting `__COUNTER__`</th>
-    </tr>
-    <tr>
-        <td>GCC</td>
-        <td>3.4.6 ❌</td>
-        <td>4.4.7 ✔️</td>
-    </tr>
-    <tr>
-        <td>Clang</td>
-        <td>3.0.0 ✔️</td>
-        <td>3.0.0 ✔️</td>
-    </tr>
-    <tr>
-        <td>MSVC</td>
-        <td>19.0 ✔️</td>
-        <td>19.0 ✔️</td>
-    </tr>
-    <tr>
-        <td>ICC</td>
-        <td>13.0.1 ✔️</td>
-        <td>13.0.1 ✔️</td>
-    </tr>
-    <tr>
-        <td>ICX</td>
-        <td>2021.1.2 ✔️</td>
-        <td>2021.1.2 ✔️</td>
-    </tr>
-    <tr>
-        <td>EDG</td>
-        <td>6.5 ✔️*</td>
-        <td>6.5 ✔️*</td>
-    </tr>
-    <tr>
-        <td>TCC</td>
-        <td>0.9.27 ✔️</td>
-        <td>0.9.27 ✔️</td>
-    </tr>
-    <tr>
-        <td>Movfuscator</td>
-        <td>Trunk ✔️</td>
-        <td>Trunk ✔️</td>
-    </tr>
+    <thead>
+        <tr>
+            <th>Compiler</th>
+            <th>Earliest Version Tested</th>
+            <th>Earliest Version Tested<br/>Supporting `__COUNTER__`</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>GCC</td>
+            <td>3.4.6 ❌</td>
+            <td>4.4.7 ✔️</td>
+        </tr>
+        <tr>
+            <td>Clang</td>
+            <td>3.0.0 ✔️</td>
+            <td>3.0.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>MSVC</td>
+            <td>19.0 ✔️</td>
+            <td>19.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>ICC</td>
+            <td>13.0.1 ✔️</td>
+            <td>13.0.1 ✔️</td>
+        </tr>
+        <tr>
+            <td>ICX</td>
+            <td>2021.1.2 ✔️</td>
+            <td>2021.1.2 ✔️</td>
+        </tr>
+        <tr>
+            <td>EDG</td>
+            <td>6.5 ✔️*</td>
+            <td>6.5 ✔️*</td>
+        </tr>
+        <tr>
+            <td>TCC</td>
+            <td>0.9.27 ✔️</td>
+            <td>0.9.27 ✔️</td>
+        </tr>
+        <tr>
+            <td>Movfuscator</td>
+            <td>Trunk ✔️</td>
+            <td>Trunk ✔️</td>
+        </tr>
+    </tbody>
 </table>
 
 *: Supported only in `--microsoft` mode
@@ -93,8 +113,10 @@ Comparison: [https://godbolt.org/z/vM7xsPE3M](https://godbolt.org/z/vM7xsPE3M)
 
 ## Precompiled Headers
 
-MSVC remembers the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
+MSVC and GCC save the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
 expanded prior to inclusion of a pre-compiled header, not using the precompiled header in such a case.
+
+This paper proposes no change to the current behavior.
 
 ## Modules
 
@@ -117,6 +139,9 @@ int NEW_VAR(x); // x0
 There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though potential for problems
 is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no such
 restriction is proposed in this proposal.
+
+This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
+clear benefit.
 
 ## ODR
 
@@ -142,6 +167,12 @@ int x = __COUNTER__;
 Current implementations do not make any special attempt to diagnose or prevent such use of `__COUNTER__` beyond existing
 ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`.
 
+## Range and Overflow
+
+`__COUNTER__` is implemented with an `unsigned` counter in GCC and Clang and both implementations wrap around to zero
+when that counter overflows. This paper recommends `__COUNTER__` shall be able to attain a value of at
+least <nobr>2<sup>32</sup> - 1</nobr> with an overflow behavior of wrapping to zero.
+
 # Proposed Wording
 
 Proposed wording relative to [[!N4950]]:
@@ -149,21 +180,32 @@ Proposed wording relative to [[!N4950]]:
 Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 1:
 
 <blockquote>
-<ul>
-<li><ins>`__COUNTER__`<br/>An integer literal starting at `0` and incrementing by `1` each time `__COUNTER__` expanded.</ins></li>
-</ul>
+    <ul>
+        <li>
+            <ins>
+                `__COUNTER__`<br/>
+                An integer literal that starts at `0` and increments by `1` each time `__COUNTER__` is expanded.
+                `__COUNTER__` shall have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>.
+                If the value of `__COUNTER__` exceeds its implementation-defined maximum value it shall reset to zero.
+            </ins>
+        </li>
+    </ul>
 </blockquote>
 
 Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a>
 after the row for `__cpp_constinit`:
 
 <table>
-    <tr>
-        <th>Macro name</th>
-        <th>Value</th>
-    </tr>
-    <tr>
-        <td><ins>`__cpp_counter`</ins></td>
-        <td><ins>`20XXXXL`</ins></td>
-    </tr>
+    <thead>
+        <tr>
+            <th>Macro name</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><ins>`__cpp_counter`</ins></td>
+            <td><ins>`20XXXXL`</ins></td>
+        </tr>
+    </tbody>
 </table>
