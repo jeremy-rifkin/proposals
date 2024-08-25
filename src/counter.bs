@@ -18,7 +18,34 @@ ED: placeholder
 
 The `__COUNTER__` pre-defined macro is a language extension for C and C++ which expands to an integer literal that
 starts at `0` and increments by `1` every time it expanded in a translation unit. This is a widely-used utility that
-is primarily useful for generating unique identifiers with preprocessor macros.
+is primarily useful for generating unique identifiers with the preprocessor.
+
+# Rationale for Standardization
+
+`__COUNTER__` is de-facto portable today. Nearly every implementation supports it with unsurprising semantics. However,
+its lack of standardization results in uncertainty about its portability and semantics. For example, libraries striving
+for maximum portability must resort to detection and fallback such as this example from
+[google benchmark](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538):
+
+```cpp
+// Check that __COUNTER__ is defined and that __COUNTER__ increases by 1
+// every time it is expanded. X + 1 == X + 0 is used in case X is defined to be
+// empty. If X is empty the expression becomes (+1 == +0).
+#if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)
+#define BENCHMARK_PRIVATE_UNIQUE_ID __COUNTER__
+#else
+#define BENCHMARK_PRIVATE_UNIQUE_ID __LINE__
+#endif
+```
+
+Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
+supports `__COUNTER__` it's not always enabled. For example, EDG only provides it in microsoft mode. In the absence of
+cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince themselves
+that `__COUNTER__` exists and does what they want.
+
+Due to its widespread nature, it would be useful to define the semantics of `__COUNTER__` as part of the official
+standard. Standardizing `__COUNTER__` makes existing use more clearly defined and portable while also providing a useful
+utility as a standard language feature.
 
 # Motivating Examples
 
@@ -89,8 +116,8 @@ tbody tr:nth-child(even) {
         </tr>
         <tr>
             <td>EDG</td>
-            <td>6.5 ✔️*</td>
-            <td>6.5 ✔️*</td>
+            <td>6.5 🟡</td>
+            <td>6.5 🟡</td>
         </tr>
         <tr>
             <td>TCC</td>
@@ -105,9 +132,9 @@ tbody tr:nth-child(even) {
     </tbody>
 </table>
 
-*: Supported only in `--microsoft` mode
+🟡: Supported only in `--microsoft` mode
 
-Comparison: [https://godbolt.org/z/vM7xsPE3M](https://godbolt.org/z/vM7xsPE3M)
+Comparison: [https://godbolt.org/z/Pf1vr8T9e](https://godbolt.org/z/Pf1vr8T9e)
 
 # Design Considerations
 
@@ -138,14 +165,14 @@ int NEW_VAR(x); // x0
 
 There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though the potential for
 problems is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no
-such restriction is proposed in this proposal.
+such restriction is proposed in this paper.
 
 This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
 clear benefit.
 
 ## ODR
 
-It's possible to accidentally violate ODR with `__COUNTER__`:
+It's possible to inadvertently violate ODR with `__COUNTER__`:
 
 ```cpp
 // foo.hpp
@@ -165,28 +192,93 @@ int x = __COUNTER__;
 ```
 
 Current implementations do not make any special attempt to diagnose or prevent such use of `__COUNTER__` beyond existing
-ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`.
+ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`. While existing practice is that
+these ODR issues exist, it is worthwhile looking at possible solutions to the problem.
+
+### Possible Solutions
+
+This is a difficult problem to solve due to the nature of `__COUNTER__` and how the preprocessor interacts with the rest
+of the language. Possible solutions include:
+
+- Just don't use `__COUNTER__` in `inline` functions in headers
+- Provide a mechanism to reset the `__COUNTER__`, or even push and pop the counter
+- Allow for multiple counters `__COUNTER__`, possibly tied to `__FILE__`
+- Change ODR to allow `inline void foo() { int x0; }` and `inline void foo() { int x1; }` to not be ill-formed
+- Some sort of deterministic `__UUID__` or `__UNIQUE__` macro that is tied to the file and line
+
+Most of these would not be practical, would add boilerplate, or would introduce substantial complexity.
+
+### Proposed Solution
+
+This paper proposes no fundamental changes to existing `__COUNTER__` functionality or language semantics. Instead,
+unique identifiers for variables in header-`inline` functions should be solved by:
+
+1. Modules, where `__COUNTER__` is module-local
+2. The `_` placeholder [[P2169]], which is ODR-friendly
+
+This proposal does not preclude additional functionality or other approaches to make `__COUNTER__` more ODR-friendly at
+a later time.
+
+#### Is `__COUNTER__` still needed?
+
+`_` is largely sufficient for uses of `__COUNTER__` in the case of local identifiers, however, it does not cover
+use-cases of `__COUNTER__` in namespace-scoped identifiers.
+
+As an example of use of `__COUNTER__` outside local functions, google benchmark uses uniquely-named identifiers at
+namespace-scope to register benchmark functions:
+
+```cpp
+// after preprocessor expansion:
+static ::benchmark::internal::Benchmark* _benchmark_2FooBar __attribute__((unused)) =
+    (
+        ::benchmark::internal::RegisterBenchmarkInternal(
+            new ::benchmark::internal::FunctionBenchmark("FooBar", FooBar)
+        )
+    );
+```
+
+An alternative to `__COUNTER__` in cases such as this would be to standardize `__attribute__((constructor))`. Google
+benchmark does not rely on `_benchmark_2FooBar` to manage any objects, it is a pure constructor, however, in cases where
+an object is managed and possibly needs to be destructed at the end of a program the approach of a namespace-scoped
+variable has the benefit of consolidating constructor and destructor logic around an object, as opposed to managing an
+object between free functions and a variable, e.g.:
+
+```cpp
+std::optional<Foo> obj;
+__attribute__((constructor)) void obj_setup() {
+    obj = setup_foo();
+}
+/* possibly a destructor too */
+// vs
+Foo obj = setup_foo();
+/* or some raii-wrapper around Foo if additional destruction logic is needed beyond normal */
+```
+
+While `_` does cover much of the use of `__COUNTER__`, it is still useful for standardization due to existing widespread
+use, unique identifiers outside inline functions, and other uses of `__COUNTER__` beyond unique identifiers.
 
 ## Range and Overflow
 
 `__COUNTER__` is implemented with an `unsigned` counter in GCC and Clang and both implementations wrap around to zero
 when that counter overflows. This paper recommends `__COUNTER__` shall be able to attain a value of at
-least <nobr>2<sup>32</sup> - 1</nobr> with an overflow behavior of wrapping to zero.
+least <nobr>2<sup>32</sup> - 1</nobr> with an error on overflow.
 
 # Proposed Wording
 
 Proposed wording relative to [[!N4950]]:
 
-Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 1:
+Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 3:
 
 <blockquote>
     <ul>
         <li>
             <ins>
                 `__COUNTER__`<br/>
-                An integer literal that starts at `0` and increments by `1` each time `__COUNTER__` is expanded.
-                `__COUNTER__` shall have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>.
-                If the value of `__COUNTER__` exceeds its implementation-defined maximum value it shall reset to zero.
+                A *decimal literal* consisting only of *digit*s representing the value of a preprocessor-internal
+                counter. The value of the counter starts at `0` and is incremented by `1` each time the `__COUNTER__`
+                macro is expanded. The counter shall have a maximum value of at least
+                <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of the counter exceeds its implementation-defined
+                maximum value the program is ill-formed.
             </ins>
         </li>
     </ul>
@@ -209,3 +301,19 @@ after the row for `__cpp_constinit`:
         </tr>
     </tbody>
 </table>
+
+Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:
+
+<blockquote>
+    The values of the predefined macros (except for `__FILE__`<del> and</del><ins>,</ins> `__LINE__`<ins>, and
+    `__COUNTER__`</ins>) remain constant throughout the translation unit.
+</blockquote>
+
+<pre class="biblio">
+{
+    "P2169": {
+        "title": "A nice placeholder with no name",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf"
+    }
+}
+</pre>
