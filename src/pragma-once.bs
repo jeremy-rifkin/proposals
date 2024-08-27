@@ -136,13 +136,18 @@ tbody tr:nth-child(even) {
 The design of an unqualified `#pragma once` is complicated due to determining file uniqueness. Currently implementations
 take varying approaches to this problem with varying pros and cons. Possible approaches include:
 
-- Canonical file paths (with short links resolved etc.; MSVC currently appears to use this but without resolving links)
+- Canonical file paths (with symbolic links resolved etc.; MSVC currently appears to use this but without resolving
+    links)
 - Filesystem unique id (inodes, etc., currently used by Clang)
 - File contents (currently used by GCC, in addition to a modification time check)
 
-Each of these approaches can fail in unique manners, whether due to soft links, hard links, or copies of the same file
-in different locations, and each of the three most widely used C++ implementations have taken completely different
+Each of these approaches can fail in unique manners, whether due to symbolic links, hard links, or copies of the same
+file in different locations, and each of the three most widely used C++ implementations have taken completely different
 approaches to determining file uniqueness.
+
+GCC's implementation with file content comparison isn't optimal and can lead to unnecessary O(n^2) behavior
+[https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58770](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58770). This isn't by
+any means an optimal approach and a hash table could easily be used.
 
 ## Shortcomings of Unqualified `#pragma once`
 
@@ -175,9 +180,11 @@ filesystem uniqueness or paths would not. GCC's approach of using modification t
 not either, even if the files are byte for byte equivalent generally you have to go out of your way to have the exact
 same modification timestamp on two files.
 
-Headers, such as library headers, that may be used in such a way that multiple identical or near-identical copies are
-included directly or transitively in a single translation unit should use qualified include guards. For other headers,
-unqualified `#pragma once` has proven to have few footguns.
+Existing `#pragma once` implementations focus on unique entries on a filesystem (even GCC's implementation due to the
+modification timestamp check). Preventing multiple inclusion of headers, such as library headers, that may be used in
+such a way that multiple identical or near-identical copies are included directly or transitively in a single
+translation unit are outside the scope of an unqualified `#pragma once`. These should instead use qualified include
+guards. Other than for this type of header file, unqualified `#pragma once` has proven to have few footguns.
 
 In this example, considering GCC's `#pragma once` semantics, if the timestamps are the same there still may be multiple
 inclusions if the files don't match exactly. One way this could happen is if the two vendored dependency headers are of
@@ -220,12 +227,12 @@ headers which are more suited for qualified include guards ([[#shortcomings-of-u
 behavior from unqualified `#pragma once` is exceptionally rare.
 
 This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified
-`#pragma once` because it is simple, portable, and robust in most cases.
+`#pragma once` because it is simple, portable, and robust in most cases. This avoids filesystem complexities by focusing
+on the essence of header files, the contents within that you intend to include.
 
 N.b.: This does not preclude implementation fast-path checks based on filesystem unique identifiers, canonical paths, or
-timestamps.
-
-> Draft note: I expect the mechanism here to be up for plenty of debate.
+timestamps. In an optimized implementation a full comparison based on contents would only be needed in cases where
+multiple copies of the same header exist on disk and are included - everything else can be ruled out early.
 
 # Use Outside Headers
 
@@ -321,7 +328,7 @@ Add two paragraphs following <a href="https://timsong-cpp.github.io/cppwp/n4950/
     </ins></pre>
 </blockquote>
 
-Add a note following the last paragraph:
+Add a note following the last paragraph, with updating numbering on subsequent notes:
 
 <blockquote>
     <ins>[*Note 1:* If a preprocessing directive beginning with</ins>
