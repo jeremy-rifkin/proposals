@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>PnnnnR0: It’s a Shame #pragma once Isn’t Standard</title>
+  <title>PnnnnR0: #pragma once and For All</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/cpp-proposals/drafts/pragma-once-draft-1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="c34ccf6464cc04f0887268e1f9b75b9118d00020" name="document-revision">
+  <meta content="744a36d0e1a519472ea9f01a3a41df62e43964d3" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2105,7 +2105,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="p-name no-ref" id="title">PnnnnR0<br>It’s a Shame <code class="highlight"><c- cp>#pragma once</c-></code> Isn’t Standard</h1>
+   <h1 class="p-name no-ref" id="title">PnnnnR0<br><code class="highlight"><c- cp>#pragma once</c-></code> and For All</h1>
    <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">New Proposal, <time class="dt-updated" datetime="2024-08-25">2024-08-25</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
@@ -2174,8 +2174,8 @@ lack of standardization creates uncertainty about portability</p>
 de-facto language feature. However, conversely, many C and <span style=";white-space:nowrap">C++</span> programmers do not use <code class="highlight"><c- cp>#pragma once</c-></code> because it is non-standard, lacks clear semantics, and because of the looming question of subtle implementation
 differences. This concern and uncertainty about such implementation differences is the origin for a lot of FUD
 surrounding the facility.</p>
-   <p>It is a shame that an extension widespread enough to be a de-facto language feature is not standardized with clear
-behavior and portability guarantees.</p>
+   <p>From a user standpoint, it is unfortunate that an extension widespread enough to be a de-facto language feature is not
+standardized with clear behavior and portability guarantees.</p>
    <h3 class="heading settled" data-level="2.1" id="previous-proposals"><span class="secno">2.1. </span><span class="content">Previous Proposals</span><a class="self-link" href="#previous-proposals"></a></h3>
    <p>Previous proposals include <em>A Qualified Replacement for #pragma once</em> <a data-link-type="biblio" href="#biblio-p0538" title="A Qualified Replacement for #pragma once">[P0538]</a> for C++ and <i><code class="highlight"><c- cp>#once</c-></code></i> <a data-link-type="biblio" href="#biblio-n2896" title="#once">[N2896]</a> for
 C.</p>
