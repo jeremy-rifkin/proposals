@@ -1,0 +1,351 @@
+<pre class='metadata'>
+Title: It's a Shame #pragma once Isn't Standard
+H1: It's a Shame <code>#pragma once</code> Isn't Standard
+Group: WG21
+Shortname: Pnnnn
+Revision: 0
+Status: NP
+Date: 2024-08-25
+Editor: Jeremy Rifkin
+Abstract: `#pragma once` is an exceptionally widely-used compiler extension provided by all major C and C++
+          implementations. This paper aims to standardize existing practices.
+Markup Shorthands: markdown on
+ED: https://jeremy-rifkin.github.io/cpp-proposals/drafts/pragma-once-draft-1.html
+!Source: [https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/pragma-once.bs](https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/pragma-once.bs)
+</pre>
+
+# Introduction
+
+`#pragma once` is a widely-supported and very widely-used compiler extension for C and C++ which serves as an
+alternative for traditional `#ifndef`-`#define`-`#endif` include guards. This has previously been proposed for C and
+C++, both in qualified and unqualified forms. This paper revisits the topic and presents a standard-defined unqualified
+`#pragma once` as well as a qualified version that is a shorthand for traditional include guard.
+
+# Motivation and Rationale for Standardization
+
+`#pragma once` is used in place of traditional guards because it's less repetitive, it's less of a distraction in code,
+it's not susceptible to qualifier collisions, and it's less susceptible to mistakes such as typos in the qualifier,
+forgetting to rename the qualifier during refactoring, or inadvertently not covering the entire header with the
+`#ifdef`. For these reasons `#pragma once` can be more robust than traditional `#ifdef` include guards, however, the
+lack of standardization creates uncertainty about portability
+
+Currently `#pragma once` is widely used as it is, in practice, a robust and portable facility. To many it has become a
+de-facto language feature. However, conversely, many C and <nobr>C++</nobr> programmers do not use `#pragma once`
+because it is non-standard, lacks clear semantics, and because of the looming question of subtle implementation
+differences. This concern and uncertainty about such implementation differences is the origin for a lot of FUD
+surrounding the facility.
+
+It is a shame that an extension widespread enough to be a de-facto language feature is not standardized with clear
+behavior and portability guarantees.
+
+## Previous Proposals
+
+Previous proposals include *A Qualified Replacement for #pragma once* [[P0538]] for C++ and <i>`#once`</i> [[N2896]] for
+C.
+
+[[P0538]] proposes a `#once ID` directive, avoiding the problem of determining file uniqueness by functioning as
+a direct shorthand for the traditional three-directive `#ifdef`-based include guard. Factors that lead to this proposal
+not being accepted included questions over standardizing `#pragma once` directly vs a similar lookalike and a hope that
+modules would alleviate the need for such a preprocessor functionality.
+
+[[N2896]] proposes both a `#once` directive and a `#once ID` directive, leaving the identification of file
+uniqueness implementation-defined in the unqualified version.
+
+## Modules?
+
+While modules will likely some day prevail over headers and the focus on modules likely played a role in why [[P0538]]
+was not accepted at the time, current practice indicates headers will continue to exist for the foreseeable future due
+to implementations requiring time to mature and new standards and practices taking time to adopt in C++ codebases.
+
+## This Proposal
+
+This paper, in the interest of standardizing existing practices, proposes standardized semantics for an unqualified
+`#pragma once`. While current widespread use has shown that unqualified `#pragma once` is sufficient in the vast
+majority of use cases, it is not an appropriate tool in all cases. Because of this, a qualified `#pragma once ID`
+shorthand for traditional `#ifdef`-based include guards is also proposed as a convenience.
+
+# Current Use
+
+GitHub code search currently shows `#pragma once` appearing in 8.4 million C++ files hosted on GitHub, excluding
+repository forks ([[codesearch]]), including in notable C++ codebases such as LLVM, nlohmann json, and Folly.
+
+# Compiler Support
+
+`#pragma once` has long been supported by all major implementations of C and C++:
+
+<style>
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid white;
+}
+tbody tr:nth-child(even) {
+    background: #111;
+}
+</style>
+
+<table>
+    <thead>
+        <tr>
+            <th>Compiler</th>
+            <th>Earliest Version Tested<br/>Supporting `#pragma once`</th>
+            <th>This Version was the Earliest<br/>Available on Compiler Explorer</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>GCC</td>
+            <td>3.4.6 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>Clang</td>
+            <td>3.0.0 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>MSVC</td>
+            <td>19.0 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>ICC</td>
+            <td>13.0.1 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>ICX</td>
+            <td>2021.1.2 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>EDG</td>
+            <td>6.5 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>TCC</td>
+            <td>0.9.27 ✔️</td>
+            <td>✔️</td>
+        </tr>
+        <tr>
+            <td>Movfuscator</td>
+            <td>Trunk ✔️</td>
+            <td>✔️</td>
+        </tr>
+    </tbody>
+</table>
+
+# Determining File Uniqueness
+
+The design of an unqualified `#pragma once` is complicated due to determining file uniqueness. Currently implementations
+take varying approaches to this problem with varying pros and cons. Possible approaches include:
+
+- Canonical file paths (with short links resolved etc.; MSVC currently appears to use this but without resolving links)
+- Filesystem unique id (inodes, etc., currently used by Clang)
+- File contents (currently used by GCC, in addition to a modification time check)
+
+Each of these approaches can fail in unique manners and each of the three most widely used C++ implementations have
+taken completely different approaches to determining file uniqueness.
+
+## Shortcomings of Unqualified `#pragma once`
+
+No matter how good the the approach to identifying file uniqueness there are some cases where `#pragma once` can lead
+to multiple inclusion where a traditional include guard would not.
+
+Consider a scenario such as:
+```
+usr/
+  include/
+    library/
+      library.hpp
+      vendored-dependency.hpp
+src/
+  main.cpp
+  vendored-dependency.hpp
+```
+
+With relevant files:
+```cpp
+// main.cpp
+#include "vendored-dependency.hpp"
+#include <library/library.hpp>
+// library.hpp
+#include "vendored-dependency.hpp"
+```
+
+A traditional qualified include guard would prevent double inclusion here, however, `#pragma once` approaches based on
+filesystem uniqueness or paths would not. GCC's approach of using modification time and file contents would most likely
+not either, even if the files are byte for byte equivalent generally you have to go out of your way to have the exact
+same modification timestamp on two files.
+
+Headers, such as library headers, that may be used in such a way that multiple identical or near-identical copies are
+included directly or transitively in a single translation unit should use qualified include guards. For other headers,
+unqualified `#pragma once` has proven to have few footguns.
+
+In this example, considering GCC's `#pragma once` semantics, if the timestamps are the same there still may be multiple
+inclusions if the files don't match exactly. One way this could happen is if the two vendored dependency headers are of
+slightly different version. Version differences add another layer of complexity to the multiple inclusion problem.
+[[P0538]] proposed a qualified `#once` directive that optionally includes a version. While it could be useful, this
+paper does not propose such a utility in the interest of keeping the focus on standardizing existing practice.
+Additionally, even in the case of traditional include guards libraries typically do not make any attempt to reconcile or
+diagnose version discrepancies. This paper does not preclude adding such a facility in the future.
+
+## A Surprising `#pragma once` Behavior
+
+I have only once heard of `#pragma once` causing problems in practice. A member of the C++ community shared with me a
+story from years ago where they had a setup such as:
+
+```cpp
+namespace v1 {
+    #include "library_v1.hpp"
+}
+namespace v2 {
+    #include "library_v2.hpp"
+}
+```
+
+In this case, both library headers included their own copy of a shared header. This didn't fail in local development due
+to GCC's modification timestamp check, however, it did fail in CI due to their setup.
+
+It's worth noting that while this behavior is surprising with `#pragma once`, this use of `#include` clashes with the
+concept of single-inclusion in general. Similar issues would emerge as a result of a qualified include guard as the
+shared header used by both copies of the library would only be included in one namespace. Certainly, this isn't an
+idiomatic use of `#include`.
+
+Related gcc bugzilla entry: [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52566](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52566).
+
+# Proposed Uniqueness System
+
+We have learned from years of experience that in practice each of the approaches presented above, with the possible
+exception of a file-path solution that doesn't consider links, work well the vast majority of the time. Other than
+headers which are more suited for qualified include guards ([[#shortcomings-of-unqualified-pragma-once]]), surprising
+behavior from unqualified `#pragma once` is exceptionally rare.
+
+This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified
+`#pragma once` because it is simple, portable, and robust in most cases.
+
+> Draft note: I expect the mechanism here to be up for plenty of debate.
+
+# Use Outside Headers
+
+GCC and Clang (including LLVM-based compilers such as ICX) warn if `#pragma once` appears in source files. I don't have
+any strong opinion on this. This paper does not propose a mandate for such a warning in the interest of not breaking
+existing code.
+
+# Directive Location
+
+[[N2896]] proposes no preprocessing tokens shall appear before `#once`. [[P0538]] suggests `#once` apply to the rest of
+the file from the point it is seen. The later doesn't mention what to do in the following case:
+
+```cpp
+#if foobar
+ #once whatever
+#endif
+```
+
+Current practice is that if `#pragma once` appears anywhere in the file the whole file should receive the `once`
+treatment. In GCC, Clang, and MSVC, `#pragma once` in an `#if` only applies if the condition is true.
+
+```cpp
+// ------------------
+int x;
+#pragma once // ok, applies to whole file
+
+// ------------------
+#if 1
+ #pragma once // ok, applies to whole file
+#endif
+
+// ------------------
+#if 0
+ #pragma once // doesn't apply to whole file
+#endif
+```
+
+This paper does not propose a requirement that `#pragma once` should appear at the beginning of a header file.
+
+# Proposed Spelling
+
+Existing practice is `#pragma once` and this paper proposes the same spelling in the interest of standardizing existing
+practices. Other proposals have changed the spelling to `#once` since `#pragma` is by definition for
+implementation-defined things. This paper proposes the spelling remain `#pragma once`, as it is simply pragmatic. This
+allows existing code to benefit from new standardization without change and avoids any need to go out of the way to
+support old standards, e.g. with:
+
+```cpp
+#if defined(__cplusplus) && __cplusplus >= xxxxxx
+ #once // new portable behavior
+#else
+ #pragma once // old behavior that was good enough in practice
+#endif
+```
+
+# Proposed Wording
+
+Proposed wording relative to [[!N4950]]:
+
+Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp#pragma-1">[cpp.pragma/1]</a>:
+
+<blockquote>
+    A preprocessing directive of the form
+    <pre>
+    # pragma pp-tokens<sub>opt</sub> new-line
+    </pre>
+    <ins>where `pp-tokens` does not begin with the identifier `once`</ins> causes the implementation to behave in an
+    implementation-defined manner. The behavior may cause translation to fail or cause the translator or the resulting
+    program to behave in a non-conforming manner. Any pragma that is not recognized by the implementation is ignored.
+</blockquote>
+
+Add two paragraphs following <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp#pragma-1">[cpp.pragma/1]</a>:
+
+<blockquote>
+    <ins>A preprocessing directive of the form</ins>
+    <pre><ins># pragma once new-line</ins></pre>
+    <ins>shall cause no subsequent `#include` directives to perform replacement for a file with text contents identical
+    to this file.</ins>
+</blockquote>
+
+<blockquote>
+    <ins>A preprocessing directive of the form</ins>
+    <pre>
+    <ins># pragma once identifier new-line</ins>
+    </pre>
+    <ins>shall cause the implementation to behave as if the entire file's contents are are wrapped inside an
+    `#ifdef identifier` which immediately defines `identifier`:</ins>
+    <pre><ins>
+    #ifndef identifier
+    #define identifier
+    // file contents
+    #endif
+    </ins></pre>
+</blockquote>
+
+Add a note following the last paragraph:
+
+<blockquote>
+    <ins>[*Note 1:* If a preprocessing directive beginning with</ins>
+    <pre><ins># pragma once</ins></pre>
+    <ins>appears outside a header file the implementation may issue a warning. *- end note*]</ins>
+</blockquote>
+
+<pre class="biblio">
+{
+    "P0538": {
+        "title": "A Qualified Replacement for #pragma once",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0538r0.html"
+    },
+    "N2896": {
+        "title": "#once",
+        "href": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2896.htm"
+    },
+    "codesearch": {
+        "title": "Github Code Search for `#pragma once`",
+        "href": "https://github.com/search?type=code&q=%2F%28%3F-i%29%23pragma+once%2F+language%3AC%2B%2B+-is%3Afork"
+    }
+}
+</pre>

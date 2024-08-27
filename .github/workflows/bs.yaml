@@ -10,11 +10,18 @@ jobs:
     runs-on: ubuntu-20.04
     permissions:
       contents: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        name: [
+          counter,
+          pragma-once
+        ]
     steps:
       - uses: actions/checkout@v3
       - uses: w3c/spec-prod@v2
         with:
           TOOLCHAIN: bikeshed
           GH_PAGES_BRANCH: gh-pages
-          SOURCE: src/counter.bs
-          DESTINATION: src/counter.html
+          SOURCE: src/${{matrix.name}}.bs
+          DESTINATION: src/${{matrix.name}}.html
