@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="506babbe06e8d1f6a3ab462d92c91e1b59ea0935" name="document-revision">
+  <meta content="ac5b131a0dc890057afcecc5cc03378f25ed5fe9" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2180,9 +2180,9 @@ for maximum portability must resort to detection and fallback such as this examp
 <c- cp>#endif</c->
 </pre>
    <p>Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
-supports <code class="highlight"><c- n>__COUNTER__</c-></code> it’s not always enabled. For example, EDG only provides it in microsoft mode. In the absence of
-cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince themselves
-that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
+supports <code class="highlight"><c- n>__COUNTER__</c-></code> it’s not always enabled. For example, EDG only provides it outside of standards mode. In the
+absence of cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince
+themselves that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
    <p>Due to its widespread nature, it would be useful to define the semantics of <code class="highlight"><c- n>__COUNTER__</c-></code> as part of the official
 standard. Standardizing <code class="highlight"><c- n>__COUNTER__</c-></code> makes existing use more clearly defined and portable while also providing a useful
 utility as a standard language feature.</p>
@@ -2250,8 +2250,9 @@ utility as a standard language feature.</p>
       <td>Trunk ✔️
       <td>Trunk ✔️
    </table>
-   <p>🟡: Supported only in <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code> mode</p>
-   <p>Comparison: <a href="https://godbolt.org/z/Pf1vr8T9e">https://godbolt.org/z/Pf1vr8T9e</a></p>
+   <p>🟡: Supported only outside standards mode, requiring either microsoft, GCC, or Clang emulation mode to be enabled
+(controlled with <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code>, <code class="highlight"><c- o>--</c-><c- n>g</c-><c- o>++</c-></code>, and <code class="highlight"><c- o>--</c-><c- n>clang</c-></code> respectively).</p>
+   <p>Comparison: <a href="https://godbolt.org/z/fqTs9sWx6">https://godbolt.org/z/fqTs9sWx6</a></p>
    <h2 class="heading settled" data-level="5" id="design-considerations"><span class="secno">5. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
    <h3 class="heading settled" data-level="5.1" id="precompiled-headers"><span class="secno">5.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
    <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
