@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/cpp-proposals/drafts/pragma-once-draft-1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="8c4667f617ce0cf381525923118859f8eedeb674" name="document-revision">
+  <meta content="64b4a6d97f690010b15f263f7fecf3d4ae5da582" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2232,15 +2232,18 @@ repository forks (<a data-link-type="biblio" href="#biblio-codesearch" title="Gi
 take varying approaches to this problem with varying pros and cons. Possible approaches include:</p>
    <ul>
     <li data-md>
-     <p>Canonical file paths (with short links resolved etc.; MSVC currently appears to use this but without resolving links)</p>
+     <p>Canonical file paths (with symbolic links resolved etc.; MSVC currently appears to use this but without resolving
+links)</p>
     <li data-md>
      <p>Filesystem unique id (inodes, etc., currently used by Clang)</p>
     <li data-md>
      <p>File contents (currently used by GCC, in addition to a modification time check)</p>
    </ul>
-   <p>Each of these approaches can fail in unique manners, whether due to soft links, hard links, or copies of the same file
-in different locations, and each of the three most widely used C++ implementations have taken completely different
+   <p>Each of these approaches can fail in unique manners, whether due to symbolic links, hard links, or copies of the same
+file in different locations, and each of the three most widely used C++ implementations have taken completely different
 approaches to determining file uniqueness.</p>
+   <p>GCC’s implementation with file content comparison isn’t optimal and can lead to unnecessary O(n^2) behavior <a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58770">https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58770</a>. This isn’t by
+any means an optimal approach and a hash table could easily be used.</p>
    <h3 class="heading settled" data-level="5.1" id="shortcomings-of-unqualified-pragma-once"><span class="secno">5.1. </span><span class="content">Shortcomings of Unqualified <code class="highlight"><c- cp>#pragma once</c-></code></span><a class="self-link" href="#shortcomings-of-unqualified-pragma-once"></a></h3>
    <p>No matter how good the the approach to identifying file uniqueness there are some cases where <code class="highlight"><c- cp>#pragma once</c-></code> can lead
 to multiple inclusion where a traditional include guard would not.</p>
@@ -2265,9 +2268,11 @@ to multiple inclusion where a traditional include guard would not.</p>
 filesystem uniqueness or paths would not. GCC’s approach of using modification time and file contents would most likely
 not either, even if the files are byte for byte equivalent generally you have to go out of your way to have the exact
 same modification timestamp on two files.</p>
-   <p>Headers, such as library headers, that may be used in such a way that multiple identical or near-identical copies are
-included directly or transitively in a single translation unit should use qualified include guards. For other headers,
-unqualified <code class="highlight"><c- cp>#pragma once</c-></code> has proven to have few footguns.</p>
+   <p>Existing <code class="highlight"><c- cp>#pragma once</c-></code> implementations focus on unique entries on a filesystem (even GCC’s implementation due to the
+modification timestamp check). Preventing multiple inclusion of headers, such as library headers, that may be used in
+such a way that multiple identical or near-identical copies are included directly or transitively in a single
+translation unit are outside the scope of an unqualified <code class="highlight"><c- cp>#pragma once</c-></code>. These should instead use qualified include
+guards. Other than for this type of header file, unqualified <code class="highlight"><c- cp>#pragma once</c-></code> has proven to have few footguns.</p>
    <p>In this example, considering GCC’s <code class="highlight"><c- cp>#pragma once</c-></code> semantics, if the timestamps are the same there still may be multiple
 inclusions if the files don’t match exactly. One way this could happen is if the two vendored dependency headers are of
 slightly different version. Version differences add another layer of complexity to the multiple inclusion problem. <a data-link-type="biblio" href="#biblio-p0538" title="A Qualified Replacement for #pragma once">[P0538]</a> proposed a qualified <code class="highlight"><c- cp>#once</c-></code> directive that optionally includes a version. While it could be useful, this
@@ -2297,12 +2302,11 @@ idiomatic use of <code class="highlight"><c- cp>#include</c-></code>.</p>
 exception of a file-path solution that doesn’t consider links, work well the vast majority of the time. Other than
 headers which are more suited for qualified include guards (<a href="#shortcomings-of-unqualified-pragma-once">§ 5.1 Shortcomings of Unqualified #pragma once</a>), surprising
 behavior from unqualified <code class="highlight"><c- cp>#pragma once</c-></code> is exceptionally rare.</p>
-   <p>This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified <code class="highlight"><c- cp>#pragma once</c-></code> because it is simple, portable, and robust in most cases.</p>
+   <p>This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified <code class="highlight"><c- cp>#pragma once</c-></code> because it is simple, portable, and robust in most cases. This avoids filesystem complexities by focusing
+on the essence of header files, the contents within that you intend to include.</p>
    <p>N.b.: This does not preclude implementation fast-path checks based on filesystem unique identifiers, canonical paths, or
-timestamps.</p>
-   <blockquote>
-    <p>Draft note: I expect the mechanism here to be up for plenty of debate.</p>
-   </blockquote>
+timestamps. In an optimized implementation a full comparison based on contents would only be needed in cases where
+multiple copies of the same header exist on disk and are included - everything else can be ruled out early.</p>
    <h2 class="heading settled" data-level="7" id="use-outside-headers"><span class="secno">7. </span><span class="content">Use Outside Headers</span><a class="self-link" href="#use-outside-headers"></a></h2>
    <p>GCC and Clang (including LLVM-based compilers such as ICX) warn if <code class="highlight"><c- cp>#pragma once</c-></code> appears in source files. I don’t have
 any strong opinion on this. This paper does not propose a mandate for such a warning in the interest of not breaking
@@ -2372,7 +2376,7 @@ support old standards, e.g. with:</p>
 <c- cp>#endif</c->
 </ins></pre>
    </blockquote>
-   <p>Add a note following the last paragraph:</p>
+   <p>Add a note following the last paragraph, with updating numbering on subsequent notes:</p>
    <blockquote>
     <ins>[<em>Note 1:</em> If a preprocessing directive beginning with</ins>
 <pre class="highlight"><ins><c- cp># pragma once</c-></ins></pre>
