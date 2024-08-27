@@ -39,9 +39,9 @@ for maximum portability must resort to detection and fallback such as this examp
 ```
 
 Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
-supports `__COUNTER__` it's not always enabled. For example, EDG only provides it in microsoft mode. In the absence of
-cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince themselves
-that `__COUNTER__` exists and does what they want.
+supports `__COUNTER__` it's not always enabled. For example, EDG only provides it outside of standards mode. In the
+absence of cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince
+themselves that `__COUNTER__` exists and does what they want.
 
 Due to its widespread nature, it would be useful to define the semantics of `__COUNTER__` as part of the official
 standard. Standardizing `__COUNTER__` makes existing use more clearly defined and portable while also providing a useful
@@ -132,9 +132,10 @@ tbody tr:nth-child(even) {
     </tbody>
 </table>
 
-🟡: Supported only in `--microsoft` mode
+🟡: Supported only outside standards mode, requiring either microsoft, GCC, or Clang emulation mode to be enabled
+(controlled with `--microsoft`, `--g++`, and `--clang` respectively).
 
-Comparison: [https://godbolt.org/z/Pf1vr8T9e](https://godbolt.org/z/Pf1vr8T9e)
+Comparison: [https://godbolt.org/z/fqTs9sWx6](https://godbolt.org/z/fqTs9sWx6)
 
 # Design Considerations
 
