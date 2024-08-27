@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/cpp-proposals/drafts/pragma-once-draft-1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="69dce0dd46188c97a51fc95435a0b05976bb88e8" name="document-revision">
+  <meta content="c34ccf6464cc04f0887268e1f9b75b9118d00020" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2200,41 +2200,32 @@ repository forks (<a data-link-type="biblio" href="#biblio-codesearch" title="Gi
     <thead>
      <tr>
       <th>Compiler
-      <th>Earliest Version Tested<br>Supporting <code class="highlight"><c- cp>#pragma once</c-></code>
-      <th>This Version was the Earliest<br>Available on Compiler Explorer
+      <th><code class="highlight"><c- cp>#pragma once</c-></code> Support in Earliest Compiler<br>Version Available on Compiler Explorer
     <tbody>
      <tr>
       <td>GCC
       <td>3.4.6 ✔️
-      <td>✔️
      <tr>
       <td>Clang
       <td>3.0.0 ✔️
-      <td>✔️
      <tr>
       <td>MSVC
       <td>19.0 ✔️
-      <td>✔️
      <tr>
       <td>ICC
       <td>13.0.1 ✔️
-      <td>✔️
      <tr>
       <td>ICX
       <td>2021.1.2 ✔️
-      <td>✔️
      <tr>
       <td>EDG
       <td>6.5 ✔️
-      <td>✔️
      <tr>
       <td>TCC
       <td>0.9.27 ✔️
-      <td>✔️
      <tr>
       <td>Movfuscator
       <td>Trunk ✔️
-      <td>✔️
    </table>
    <h2 class="heading settled" data-level="5" id="determining-file-uniqueness"><span class="secno">5. </span><span class="content">Determining File Uniqueness</span><a class="self-link" href="#determining-file-uniqueness"></a></h2>
    <p>The design of an unqualified <code class="highlight"><c- cp>#pragma once</c-></code> is complicated due to determining file uniqueness. Currently implementations
@@ -2247,8 +2238,9 @@ take varying approaches to this problem with varying pros and cons. Possible app
     <li data-md>
      <p>File contents (currently used by GCC, in addition to a modification time check)</p>
    </ul>
-   <p>Each of these approaches can fail in unique manners and each of the three most widely used C++ implementations have
-taken completely different approaches to determining file uniqueness.</p>
+   <p>Each of these approaches can fail in unique manners, whether due to soft links, hard links, or copies of the same file
+in different locations, and each of the three most widely used C++ implementations have taken completely different
+approaches to determining file uniqueness.</p>
    <h3 class="heading settled" data-level="5.1" id="shortcomings-of-unqualified-pragma-once"><span class="secno">5.1. </span><span class="content">Shortcomings of Unqualified <code class="highlight"><c- cp>#pragma once</c-></code></span><a class="self-link" href="#shortcomings-of-unqualified-pragma-once"></a></h3>
    <p>No matter how good the the approach to identifying file uniqueness there are some cases where <code class="highlight"><c- cp>#pragma once</c-></code> can lead
 to multiple inclusion where a traditional include guard would not.</p>
@@ -2283,8 +2275,7 @@ paper does not propose such a utility in the interest of keeping the focus on st
 Additionally, even in the case of traditional include guards libraries typically do not make any attempt to reconcile or
 diagnose version discrepancies. This paper does not preclude adding such a facility in the future.</p>
    <h3 class="heading settled" data-level="5.2" id="a-surprising-pragma-once-behavior"><span class="secno">5.2. </span><span class="content">A Surprising <code class="highlight"><c- cp>#pragma once</c-></code> Behavior</span><a class="self-link" href="#a-surprising-pragma-once-behavior"></a></h3>
-   <p>I have only once heard of <code class="highlight"><c- cp>#pragma once</c-></code> causing problems in practice. A member of the C++ community shared with me a
-story from years ago where they had a setup such as:</p>
+   <p>I have only once heard of <code class="highlight"><c- cp>#pragma once</c-></code> causing problems in practice. Consider a setup such as:</p>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>v1</c-> <c- p>{</c->
     <c- cp>#include</c-> "library_v1.hpp"
 <c- p>}</c->
@@ -2292,8 +2283,10 @@ story from years ago where they had a setup such as:</p>
     <c- cp>#include</c-> "library_v2.hpp"
 <c- p>}</c->
 </pre>
-   <p>In this case, both library headers included their own copy of a shared header. This didn’t fail in local development due
-to GCC’s modification timestamp check, however, it did fail in CI due to their setup.</p>
+   <p>Where both library headers included their own copy of a shared header. This may work under most circumstances with GCC
+due to its modification timestamp check, however, it can fail in scenarios where the files end up having identical
+modification times. This can happen in some automated testing setups, leading to a surprising discrepancy between local
+development and CI where there are errors in one namespace but not the other that are hard to reproduce locally.</p>
    <p>It’s worth noting that while this behavior is surprising with <code class="highlight"><c- cp>#pragma once</c-></code>, this use of <code class="highlight"><c- cp>#include</c-></code> clashes with the
 concept of single-inclusion in general. Similar issues would emerge as a result of a qualified include guard as the
 shared header used by both copies of the library would only be included in one namespace. Certainly, this isn’t an
@@ -2305,6 +2298,8 @@ exception of a file-path solution that doesn’t consider links, work well the v
 headers which are more suited for qualified include guards (<a href="#shortcomings-of-unqualified-pragma-once">§ 5.1 Shortcomings of Unqualified #pragma once</a>), surprising
 behavior from unqualified <code class="highlight"><c- cp>#pragma once</c-></code> is exceptionally rare.</p>
    <p>This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified <code class="highlight"><c- cp>#pragma once</c-></code> because it is simple, portable, and robust in most cases.</p>
+   <p>N.b.: This does not preclude implementation fast-path checks based on filesystem unique identifiers, canonical paths, or
+timestamps.</p>
    <blockquote>
     <p>Draft note: I expect the mechanism here to be up for plenty of debate.</p>
    </blockquote>
@@ -2320,15 +2315,18 @@ the file from the point it is seen. The later doesn’t mention what to do in th
 <c- cp>#endif</c->
 </pre>
    <p>Current practice is that if <code class="highlight"><c- cp>#pragma once</c-></code> appears anywhere in the file the whole file should receive the <code class="highlight"><c- n>once</c-></code> treatment. In GCC, Clang, and MSVC, <code class="highlight"><c- cp>#pragma once</c-></code> in an <code class="highlight"><c- cp>#if</c-></code> only applies if the condition is true.</p>
-<pre class="language-cpp highlight"><c- c1>// ----------------—&lt;wbr>int x;</c->
+<pre class="language-cpp highlight"><c- c1>// ---------------- //</c->
+<c- b>int</c-> <c- n>x</c-><c- p>;</c->
 <c- cp>#pragma once </c-><c- c1>// ok, applies to whole file</c->
 
-<c- c1>// ----------------—&lt;wbr>#if 1</c->
+<c- c1>// ---------------- //</c->
+<c- cp>#if 1</c->
  <c- cp>#pragma once </c-><c- c1>// ok, applies to whole file</c->
 <c- cp>#endif</c->
 
-<c- c1>// ----------------—&lt;wbr>#if 0</c->
- <c- cp>#pragma once </c-><c- c1>// doesn’t apply to whole file</c->
+<c- c1>// ---------------- //</c->
+<c- cp>#if 0</c->
+<c- c> #pragma once // doesn’t apply to whole file</c->
 <c- cp>#endif</c->
 </pre>
    <p>This paper does not propose a requirement that <code class="highlight"><c- cp>#pragma once</c-></code> should appear at the beginning of a header file.</p>
