@@ -92,50 +92,41 @@ tbody tr:nth-child(even) {
     <thead>
         <tr>
             <th>Compiler</th>
-            <th>Earliest Version Tested<br/>Supporting `#pragma once`</th>
-            <th>This Version was the Earliest<br/>Available on Compiler Explorer</th>
+            <th>`#pragma once` Support in Earliest Compiler<br/>Version Available on Compiler Explorer</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>GCC</td>
             <td>3.4.6 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>Clang</td>
             <td>3.0.0 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>MSVC</td>
             <td>19.0 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>ICC</td>
             <td>13.0.1 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>ICX</td>
             <td>2021.1.2 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>EDG</td>
             <td>6.5 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>TCC</td>
             <td>0.9.27 ✔️</td>
-            <td>✔️</td>
         </tr>
         <tr>
             <td>Movfuscator</td>
             <td>Trunk ✔️</td>
-            <td>✔️</td>
         </tr>
     </tbody>
 </table>
@@ -149,8 +140,9 @@ take varying approaches to this problem with varying pros and cons. Possible app
 - Filesystem unique id (inodes, etc., currently used by Clang)
 - File contents (currently used by GCC, in addition to a modification time check)
 
-Each of these approaches can fail in unique manners and each of the three most widely used C++ implementations have
-taken completely different approaches to determining file uniqueness.
+Each of these approaches can fail in unique manners, whether due to soft links, hard links, or copies of the same file
+in different locations, and each of the three most widely used C++ implementations have taken completely different
+approaches to determining file uniqueness.
 
 ## Shortcomings of Unqualified `#pragma once`
 
@@ -197,8 +189,7 @@ diagnose version discrepancies. This paper does not preclude adding such a facil
 
 ## A Surprising `#pragma once` Behavior
 
-I have only once heard of `#pragma once` causing problems in practice. A member of the C++ community shared with me a
-story from years ago where they had a setup such as:
+I have only once heard of `#pragma once` causing problems in practice. Consider a setup such as:
 
 ```cpp
 namespace v1 {
@@ -209,8 +200,10 @@ namespace v2 {
 }
 ```
 
-In this case, both library headers included their own copy of a shared header. This didn't fail in local development due
-to GCC's modification timestamp check, however, it did fail in CI due to their setup.
+Where both library headers included their own copy of a shared header. This may work under most circumstances with GCC
+due to its modification timestamp check, however, it can fail in scenarios where the files end up having identical
+modification times. This can happen in some automated testing setups, leading to a surprising discrepancy between local
+development and CI where there are errors in one namespace but not the other that are hard to reproduce locally.
 
 It's worth noting that while this behavior is surprising with `#pragma once`, this use of `#include` clashes with the
 concept of single-inclusion in general. Similar issues would emerge as a result of a qualified include guard as the
@@ -228,6 +221,9 @@ behavior from unqualified `#pragma once` is exceptionally rare.
 
 This paper proposes the GCC approach of file contents be used to determine file uniqueness for unqualified
 `#pragma once` because it is simple, portable, and robust in most cases.
+
+N.b.: This does not preclude implementation fast-path checks based on filesystem unique identifiers, canonical paths, or
+timestamps.
 
 > Draft note: I expect the mechanism here to be up for plenty of debate.
 
@@ -252,16 +248,16 @@ Current practice is that if `#pragma once` appears anywhere in the file the whol
 treatment. In GCC, Clang, and MSVC, `#pragma once` in an `#if` only applies if the condition is true.
 
 ```cpp
-// ------------------
+// ---------------- //
 int x;
 #pragma once // ok, applies to whole file
 
-// ------------------
+// ---------------- //
 #if 1
  #pragma once // ok, applies to whole file
 #endif
 
-// ------------------
+// ---------------- //
 #if 0
  #pragma once // doesn't apply to whole file
 #endif
