@@ -1,6 +1,6 @@
 <pre class='metadata'>
-Title: It's a Shame #pragma once Isn't Standard
-H1: It's a Shame <code>#pragma once</code> Isn't Standard
+Title: #pragma once and For All
+H1: <code>#pragma once</code> and For All
 Group: WG21
 Shortname: Pnnnn
 Revision: 0
@@ -35,8 +35,8 @@ because it is non-standard, lacks clear semantics, and because of the looming qu
 differences. This concern and uncertainty about such implementation differences is the origin for a lot of FUD
 surrounding the facility.
 
-It is a shame that an extension widespread enough to be a de-facto language feature is not standardized with clear
-behavior and portability guarantees.
+From a user standpoint, it is unfortunate that an extension widespread enough to be a de-facto language feature is not
+standardized with clear behavior and portability guarantees.
 
 ## Previous Proposals
 
