@@ -10,7 +10,7 @@ Editor: Jeremy Rifkin
 Abstract: `__COUNTER__` is a widely-used predefined macro provided as a language extension by all major C and C++
           implementations. This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
-ED: placeholder
+ED: https://jeremy-rifkin.github.io/cpp-proposals/drafts/counter_draft_3.html
 !Source: [https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs](https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs)
 </pre>
 
@@ -295,24 +295,6 @@ Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.
         </li>
     </ul>
 </blockquote>
-
-Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a>
-after the row for `__cpp_constinit`:
-
-<table>
-    <thead>
-        <tr>
-            <th>Macro name</th>
-            <th>Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><ins>`__cpp_counter`</ins></td>
-            <td><ins>`20XXXXL`</ins></td>
-        </tr>
-    </tbody>
-</table>
 
 Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:
 
