@@ -24,7 +24,7 @@ jobs:
           cd src
           for f in *.bs;
           do
-            if [[ changes =~ "src/$f" ]];
+            if [[ $changes =~ "src/$f" ]];
             then
               bikeshed spec $f
             fi
@@ -33,12 +33,19 @@ jobs:
         run: |
           message=$(git show -s --format=%s)
           mkdir /tmp/renders
-          mv -v src/*.html /tmp/renders
+          if compgen -G "src/*.html" > /dev/null; then
+            mv -v src/*.html /tmp/renders
+          fi
           git checkout gh-pages
-          mv -v /tmp/renders/* src
+          if compgen -G "/tmp/renders/*" > /dev/null; then
+            mv -v /tmp/renders/* src
+          fi
           rm -rfv drafts
           git checkout main -- drafts
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git commit -am "[Bikeshed]: $message"
-          git push
+          if [[ -n "$(git status -s)" ]];
+          then
+            git commit -am "[Bikeshed]: $message"
+            git push
+          fi
