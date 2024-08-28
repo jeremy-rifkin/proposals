@@ -1564,8 +1564,11 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="placeholder" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="77c29086da60d0b62316726bf322ac68febb79be" name="document-revision">
+  <meta content="3367b50f46b92c0e05b7f7d265a236ae8adc289f" name="document-revision">
 <style>
+table, th, td {
+    border: none;
+}
 th, td {
     padding: 5px 10px;
 }
@@ -1573,10 +1576,18 @@ th {
     vertical-align: middle;
 }
 thead {
-    border-bottom: 2px solid white;
+    border-bottom: 2px solid black;
 }
 tbody tr:nth-child(even) {
-    background: #111;
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
 }
 </style>
 <style>/* Boilerplate: style-autolinks */
