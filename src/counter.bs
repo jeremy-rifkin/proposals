@@ -66,6 +66,9 @@ A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 `__COUNTER__` has long been supported by all major implementations of C and C++:
 
 <style>
+table, th, td {
+    border: none;
+}
 th, td {
     padding: 5px 10px;
 }
@@ -73,10 +76,18 @@ th {
     vertical-align: middle;
 }
 thead {
-    border-bottom: 2px solid white;
+    border-bottom: 2px solid black;
 }
 tbody tr:nth-child(even) {
-    background: #111;
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
 }
 </style>
 
