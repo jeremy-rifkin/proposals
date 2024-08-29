@@ -10,7 +10,7 @@ Editor: Jeremy Rifkin
 Abstract: `#pragma once` is an exceptionally widely-used compiler extension provided by all major C and C++
           implementations. This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
-ED: https://jeremy-rifkin.github.io/cpp-proposals/drafts/pragma-once-draft-1.html
+ED: https://jeremy-rifkin.github.io/proposals/drafts/pragma-once-draft-1.html
 !Source: [https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/pragma-once.bs](https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/pragma-once.bs)
 </pre>
 
