@@ -1561,15 +1561,11 @@ Possible extra rowspan handling
     blockquote c-[vi] { color: inherit; } /* Name.Variable.Instance */
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
-  <meta content="Bikeshed version 6270e4735, updated Tue Aug 6 12:12:30 2024 -0700" name="generator">
-  <link href="https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_3.html" rel="canonical">
+  <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
+  <link href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_draft_2.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="3367b50f46b92c0e05b7f7d265a236ae8adc289f" name="revision">
-  <meta content="dark light" name="color-scheme">
+  <meta content="506babbe06e8d1f6a3ab462d92c91e1b59ea0935" name="document-revision">
 <style>
-table, th, td {
-    border: none;
-}
 th, td {
     padding: 5px 10px;
 }
@@ -1577,18 +1573,10 @@ th {
     vertical-align: middle;
 }
 thead {
-    border-bottom: 2px solid black;
+    border-bottom: 2px solid white;
 }
 tbody tr:nth-child(even) {
-    background: #eee;
-}
-@media (prefers-color-scheme: dark) {
-    thead {
-        border-bottom: 2px solid white;
-    }
-    tbody tr:nth-child(even) {
-        background: #111;
-    }
+    background: #111;
 }
 </style>
 <style>/* Boilerplate: style-autolinks */
@@ -1662,6 +1650,7 @@ pre .property::before, pre .property::after {
 }
 </style>
 <style>/* Boilerplate: style-colors */
+
 /* Any --*-text not paired with a --*-bg is assumed to have a transparent bg */
 :root {
     color-scheme: light dark;
@@ -1931,6 +1920,7 @@ a[href].issue-return {
 }
 </style>
 <style>/* Boilerplate: style-selflinks */
+
 :root {
     --selflink-text: white;
     --selflink-bg: gray;
@@ -1990,6 +1980,7 @@ a.self-link::before            { content: "¶"; }
 dfn > a.self-link::before      { content: "#"; }
 </style>
 <style>/* Boilerplate: style-syntax-highlighting */
+
 code.highlight { padding: .1em; border-radius: .3em; }
 pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em 0; overflow: auto; border-radius: 0; }
 
@@ -2046,6 +2037,7 @@ c-[vc] { color: #0077aa } /* Name.Variable.Class */
 c-[vg] { color: #0077aa } /* Name.Variable.Global */
 c-[vi] { color: #0077aa } /* Name.Variable.Instance */
 c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
+
 
 @media (prefers-color-scheme: dark) {
     .highlight:not(.idl) { background: rgba(255, 255, 255, .05); }
@@ -2118,13 +2110,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
-     <dd><a class="u-url" href="https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_3.html">https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_3.html</a>
+     <dd><a class="u-url" href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_draft_2.html">https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_draft_2.html</a>
      <dt class="editor">Author:
      <dd class="editor p-author h-card vcard"><span class="p-name fn">Jeremy Rifkin</span>
      <dt>Project:
      <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
      <dt>Source:
-     <dd><a href="https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs">https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs</a>
+     <dd><a href="https://github.com/jeremy-rifkin/proposals/blob/main/src/counter.bs">https://github.com/jeremy-rifkin/proposals/blob/main/src/counter.bs</a>
     </dl>
    </div>
    <div data-fill-with="warning"></div>
@@ -2133,7 +2125,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="p-summary" data-fill-with="abstract">
    <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a widely-used predefined macro provided as a language extension by all major C and C++
-implementations. This paper aims to standardize existing practices.</p>
+
+          implementations. This paper aims to standardize existing practices.</p>
   </div>
   <nav data-fill-with="table-of-contents" id="toc">
    <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
@@ -2187,9 +2180,9 @@ for maximum portability must resort to detection and fallback such as this examp
 <c- cp>#endif</c->
 </pre>
    <p>Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
-supports <code class="highlight"><c- n>__COUNTER__</c-></code> it’s not always enabled. For example, EDG only provides it outside of standards mode. In the
-absence of cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince
-themselves that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
+supports <code class="highlight"><c- n>__COUNTER__</c-></code> it’s not always enabled. For example, EDG only provides it in microsoft mode. In the absence of
+cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince themselves
+that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
    <p>Due to its widespread nature, it would be useful to define the semantics of <code class="highlight"><c- n>__COUNTER__</c-></code> as part of the official
 standard. Standardizing <code class="highlight"><c- n>__COUNTER__</c-></code> makes existing use more clearly defined and portable while also providing a useful
 utility as a standard language feature.</p>
@@ -2257,9 +2250,8 @@ utility as a standard language feature.</p>
       <td>Trunk ✔️
       <td>Trunk ✔️
    </table>
-   <p>🟡: Supported only outside standards mode, requiring either microsoft, GCC, or Clang emulation mode to be enabled
-(controlled with <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code>, <code class="highlight"><c- o>--</c-><c- n>g</c-><c- o>++</c-></code>, and <code class="highlight"><c- o>--</c-><c- n>clang</c-></code> respectively).</p>
-   <p>Comparison: <a href="https://godbolt.org/z/fqTs9sWx6">https://godbolt.org/z/fqTs9sWx6</a></p>
+   <p>🟡: Supported only in <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code> mode</p>
+   <p>Comparison: <a href="https://godbolt.org/z/Pf1vr8T9e">https://godbolt.org/z/Pf1vr8T9e</a></p>
    <h2 class="heading settled" data-level="5" id="design-considerations"><span class="secno">5. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
    <h3 class="heading settled" data-level="5.1" id="precompiled-headers"><span class="secno">5.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
    <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
@@ -2375,6 +2367,19 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
                 maximum value the program is ill-formed. </ins>
     </ul>
    </blockquote>
+   <p>Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> after the row for <code class="highlight"><c- n>__cpp_constinit</c-></code>:</p>
+   <table>
+    <thead>
+     <tr>
+      <th>Macro name
+      <th>Value
+    <tbody>
+     <tr>
+      <td>
+       <ins><code class="highlight"><c- n>__cpp_counter</c-></code></ins>
+      <td>
+       <ins><code class="highlight"><c- mi>20</c-><c- n>XXXXL</c-></code></ins>
+   </table>
    <p>Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:</p>
    <blockquote>
      The values of the predefined macros (except for <code class="highlight"><c- n>__FILE__</c-></code>
@@ -2406,7 +2411,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       on = !document.body.classList.contains('toc-sidebar');
     }
 
-    /* Don't scroll to compensate for the ToC if we're above it already. */
+    /* Don’t scroll to compensate for the ToC if we’re above it already. */
     var headY = 0;
     var head = document.querySelector('.head');
     if (head) {
@@ -2437,16 +2442,16 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       }
       if (toggle.matches(':hover')) {
         /* Unfocus button when not using keyboard navigation,
-           because I don't know where else to send the focus. */
+           because I don’t know where else to send the focus. */
         toggle.blur();
       }
     }
   }
 
   function createSidebarToggle() {
-    /* Create the sidebar toggle in JS; it shouldn't exist when JS is off. */
+    /* Create the sidebar toggle in JS; it shouldn’t exist when JS is off. */
     var toggle = document.createElement('a');
-      /* This should probably be a button, but appearance isn't standards-track.*/
+      /* This should probably be a button, but appearance isn’t standards-track.*/
     toggle.id = 'toc-toggle';
     toggle.class = 'toc-toggle';
     toggle.href = '#toc';
@@ -2462,7 +2467,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
     toggle.addEventListener('click', toggler, false);
 
 
-    /* Get <nav id=toc-nav>, or make it if we don't have one. */
+    /* Get <nav id=toc-nav>, or make it if we don’t have one. */
     var tocNav = document.getElementById('toc-nav');
     if (!tocNav) {
       tocNav = document.createElement('p');
@@ -2470,7 +2475,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       /* Prepend for better keyboard navigation */
       document.body.insertBefore(tocNav, document.body.firstChild);
     }
-    /* While we're at it, make sure we have a Jump to Toc link. */
+    /* While we’re at it, make sure we have a Jump to Toc link. */
     var tocJump = document.getElementById('toc-jump');
     if (!tocJump) {
       tocJump = document.createElement('a');
@@ -2498,7 +2503,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
     }, false);
   }
   else {
-    console.warn("Can't find Table of Contents. Please use <nav id='toc'> around the ToC.");
+    console.warn("Can’t find Table of Contents. Please use <nav id='toc'> around the ToC.");
   }
 
   /* Wrap tables in case they overflow */

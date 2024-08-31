@@ -1562,9 +1562,9 @@ Possible extra rowspan handling
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
-  <link href="https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_2.html" rel="canonical">
+  <link href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_initial_draft.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="506babbe06e8d1f6a3ab462d92c91e1b59ea0935" name="document-revision">
+  <meta content="7a55cb3489e412d8c72da70e5c6e203038da1e9b" name="document-revision">
 <style>
 th, td {
     padding: 5px 10px;
@@ -2110,13 +2110,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
-     <dd><a class="u-url" href="https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_2.html">https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_2.html</a>
+     <dd><a class="u-url" href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_initial_draft.html">https://jeremy-rifkin.github.io/proposals/drafts/cpp/counter_initial_draft.html</a>
      <dt class="editor">Author:
      <dd class="editor p-author h-card vcard"><span class="p-name fn">Jeremy Rifkin</span>
      <dt>Project:
      <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
      <dt>Source:
-     <dd><a href="https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs">https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs</a>
+     <dd><a href="https://github.com/jeremy-rifkin/proposals/blob/main/src/counter.bs">https://github.com/jeremy-rifkin/proposals/blob/main/src/counter.bs</a>
     </dl>
    </div>
    <div data-fill-with="warning"></div>
@@ -2132,32 +2132,21 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
    <ol class="toc" role="directory">
     <li><a href="#introduction"><span class="secno">1</span> <span class="content">Introduction</span></a>
-    <li><a href="#rationale-for-standardization"><span class="secno">2</span> <span class="content">Rationale for Standardization</span></a>
-    <li><a href="#motivating-examples"><span class="secno">3</span> <span class="content">Motivating Examples</span></a>
-    <li><a href="#implementation-support"><span class="secno">4</span> <span class="content">Implementation Support</span></a>
+    <li><a href="#motivating-examples"><span class="secno">2</span> <span class="content">Motivating Examples</span></a>
+    <li><a href="#implementation-support"><span class="secno">3</span> <span class="content">Implementation Support</span></a>
     <li>
-     <a href="#design-considerations"><span class="secno">5</span> <span class="content">Design Considerations</span></a>
+     <a href="#design-considerations"><span class="secno">4</span> <span class="content">Design Considerations</span></a>
      <ol class="toc">
-      <li><a href="#precompiled-headers"><span class="secno">5.1</span> <span class="content">Precompiled Headers</span></a>
-      <li><a href="#modules"><span class="secno">5.2</span> <span class="content">Modules</span></a>
-      <li>
-       <a href="#odr"><span class="secno">5.3</span> <span class="content">ODR</span></a>
-       <ol class="toc">
-        <li><a href="#possible-solutions"><span class="secno">5.3.1</span> <span class="content">Possible Solutions</span></a>
-        <li>
-         <a href="#proposed-solution"><span class="secno">5.3.2</span> <span class="content">Proposed Solution</span></a>
-         <ol class="toc">
-          <li><a href="#is-__counter__-still-needed"><span class="secno">5.3.2.1</span> <span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span></a>
-         </ol>
-       </ol>
-      <li><a href="#range-and-overflow"><span class="secno">5.4</span> <span class="content">Range and Overflow</span></a>
+      <li><a href="#precompiled-headers"><span class="secno">4.1</span> <span class="content">Precompiled Headers</span></a>
+      <li><a href="#modules"><span class="secno">4.2</span> <span class="content">Modules</span></a>
+      <li><a href="#odr"><span class="secno">4.3</span> <span class="content">ODR</span></a>
+      <li><a href="#range-and-overflow"><span class="secno">4.4</span> <span class="content">Range and Overflow</span></a>
      </ol>
-    <li><a href="#proposed-wording"><span class="secno">6</span> <span class="content">Proposed Wording</span></a>
+    <li><a href="#proposed-wording"><span class="secno">5</span> <span class="content">Proposed Wording</span></a>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
       <li><a href="#normative"><span class="secno"></span> <span class="content">Normative References</span></a>
-      <li><a href="#informative"><span class="secno"></span> <span class="content">Informative References</span></a>
      </ol>
    </ol>
   </nav>
@@ -2165,28 +2154,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <h2 class="heading settled" data-level="1" id="introduction"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
    <p>The <code class="highlight"><c- n>__COUNTER__</c-></code> pre-defined macro is a language extension for C and C++ which expands to an integer literal that
 starts at <code class="highlight"><c- mi>0</c-></code> and increments by <code class="highlight"><c- mi>1</c-></code> every time it expanded in a translation unit. This is a widely-used utility that
-is primarily useful for generating unique identifiers with the preprocessor.</p>
-   <h2 class="heading settled" data-level="2" id="rationale-for-standardization"><span class="secno">2. </span><span class="content">Rationale for Standardization</span><a class="self-link" href="#rationale-for-standardization"></a></h2>
-   <p><code class="highlight"><c- n>__COUNTER__</c-></code> is de-facto portable today. Nearly every implementation supports it with unsurprising semantics. However,
-its lack of standardization results in uncertainty about its portability and semantics. For example, libraries striving
-for maximum portability must resort to detection and fallback such as this example from <a href="https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538">google benchmark</a>:</p>
-<pre class="language-cpp highlight"><c- c1>// Check that __COUNTER__ is defined and that __COUNTER__ increases by 1</c->
-<c- c1>// every time it is expanded. X + 1 == X + 0 is used in case X is defined to be</c->
-<c- c1>// empty. If X is empty the expression becomes (+1 == +0).</c->
-<c- cp>#if defined(__COUNTER__) &amp;&amp; (__COUNTER__ + 1 == __COUNTER__ + 0)</c->
-<c- cp>#define BENCHMARK_PRIVATE_UNIQUE_ID __COUNTER__</c->
-<c- cp>#else</c->
-<c- cp>#define BENCHMARK_PRIVATE_UNIQUE_ID __LINE__</c->
-<c- cp>#endif</c->
-</pre>
-   <p>Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
-supports <code class="highlight"><c- n>__COUNTER__</c-></code> it’s not always enabled. For example, EDG only provides it in microsoft mode. In the absence of
-cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince themselves
-that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
-   <p>Due to its widespread nature, it would be useful to define the semantics of <code class="highlight"><c- n>__COUNTER__</c-></code> as part of the official
-standard. Standardizing <code class="highlight"><c- n>__COUNTER__</c-></code> makes existing use more clearly defined and portable while also providing a useful
-utility as a standard language feature.</p>
-   <h2 class="heading settled" data-level="3" id="motivating-examples"><span class="secno">3. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
+is primarily useful for generating unique identifiers with preprocessor macros.</p>
+   <h2 class="heading settled" data-level="2" id="motivating-examples"><span class="secno">2. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
    <p>A brief survey of some uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the C and C++ community:</p>
    <ul>
     <li data-md>
@@ -2208,7 +2177,7 @@ utility as a standard language feature.</p>
     <li data-md>
      <p>Metric Panda Games uses <code class="highlight"><c- n>__COUNTER__</c-></code> for <a href="https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/">lookup tables</a> as part of a localization and compile-time string hashing system.</p>
    </ul>
-   <h2 class="heading settled" data-level="4" id="implementation-support"><span class="secno">4. </span><span class="content">Implementation Support</span><a class="self-link" href="#implementation-support"></a></h2>
+   <h2 class="heading settled" data-level="3" id="implementation-support"><span class="secno">3. </span><span class="content">Implementation Support</span><a class="self-link" href="#implementation-support"></a></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> has long been supported by all major implementations of C and C++:</p>
    <table>
     <thead>
@@ -2239,8 +2208,8 @@ utility as a standard language feature.</p>
       <td>2021.1.2 ✔️
      <tr>
       <td>EDG
-      <td>6.5 🟡
-      <td>6.5 🟡
+      <td>6.5 ✔️*
+      <td>6.5 ✔️*
      <tr>
       <td>TCC
       <td>0.9.27 ✔️
@@ -2250,14 +2219,14 @@ utility as a standard language feature.</p>
       <td>Trunk ✔️
       <td>Trunk ✔️
    </table>
-   <p>🟡: Supported only in <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code> mode</p>
-   <p>Comparison: <a href="https://godbolt.org/z/Pf1vr8T9e">https://godbolt.org/z/Pf1vr8T9e</a></p>
-   <h2 class="heading settled" data-level="5" id="design-considerations"><span class="secno">5. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
-   <h3 class="heading settled" data-level="5.1" id="precompiled-headers"><span class="secno">5.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
+   <p>*: Supported only in <code class="highlight"><c- o>--</c-><c- n>microsoft</c-></code> mode</p>
+   <p>Comparison: <a href="https://godbolt.org/z/vM7xsPE3M">https://godbolt.org/z/vM7xsPE3M</a></p>
+   <h2 class="heading settled" data-level="4" id="design-considerations"><span class="secno">4. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
+   <h3 class="heading settled" data-level="4.1" id="precompiled-headers"><span class="secno">4.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
    <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
 expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.</p>
    <p>This paper proposes no change to the current behavior.</p>
-   <h3 class="heading settled" data-level="5.2" id="modules"><span class="secno">5.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
+   <h3 class="heading settled" data-level="4.2" id="modules"><span class="secno">4.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
    <p>GCC and MSVC do not propagate <code class="highlight"><c- n>__COUNTER__</c-></code> across modules, including for header units. The following compiles with a
 linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-></code>:</p>
 <pre class="language-cpp highlight"><c- c1>// header.hpp</c->
@@ -2273,11 +2242,11 @@ linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-
 </pre>
    <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though the potential for
 problems is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no
-such restriction is proposed in this paper.</p>
+such restriction is proposed in this proposal.</p>
    <p>This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
 clear benefit.</p>
-   <h3 class="heading settled" data-level="5.3" id="odr"><span class="secno">5.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
-   <p>It’s possible to inadvertently violate ODR with <code class="highlight"><c- n>__COUNTER__</c-></code>:</p>
+   <h3 class="heading settled" data-level="4.3" id="odr"><span class="secno">4.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
+   <p>It’s possible to accidentally violate ODR with <code class="highlight"><c- n>__COUNTER__</c-></code>:</p>
 <pre class="language-cpp highlight"><c- c1>// foo.hpp</c->
 <c- cp>#define CONCAT_IMPL(x, y) x##y</c->
 <c- cp>#define CONCAT(x, y) CONCAT_IMPL(x, y)</c->
@@ -2294,77 +2263,19 @@ clear benefit.</p>
 <c- cp>#include</c-> "foo.hpp"
 </pre>
    <p>Current implementations do not make any special attempt to diagnose or prevent such use of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond existing
-ODR diagnostics. Similar ODR issues can occur as a result of <code class="highlight"><c- n>__DATE__</c-></code> and <code class="highlight"><c- n>__TIME__</c-></code>. While existing practice is that
-these ODR issues exist, it is worthwhile looking at possible solutions to the problem.</p>
-   <h4 class="heading settled" data-level="5.3.1" id="possible-solutions"><span class="secno">5.3.1. </span><span class="content">Possible Solutions</span><a class="self-link" href="#possible-solutions"></a></h4>
-   <p>This is a difficult problem to solve due to the nature of <code class="highlight"><c- n>__COUNTER__</c-></code> and how the preprocessor interacts with the rest
-of the language. Possible solutions include:</p>
-   <ul>
-    <li data-md>
-     <p>Just don’t use <code class="highlight"><c- n>__COUNTER__</c-></code> in <code class="highlight"><c- kr>inline</c-></code> functions in headers</p>
-    <li data-md>
-     <p>Provide a mechanism to reset the <code class="highlight"><c- n>__COUNTER__</c-></code>, or even push and pop the counter</p>
-    <li data-md>
-     <p>Allow for multiple counters <code class="highlight"><c- n>__COUNTER__</c-></code>, possibly tied to <code class="highlight"><c- n>__FILE__</c-></code></p>
-    <li data-md>
-     <p>Change ODR to allow <code class="highlight"><c- kr>inline</c-> <c- b>void</c-> <c- nf>foo</c-><c- p>()</c-> <c- p>{</c-> <c- b>int</c-> <c- n>x0</c-><c- p>;</c-> <c- p>}</c-></code> and <code class="highlight"><c- kr>inline</c-> <c- b>void</c-> <c- nf>foo</c-><c- p>()</c-> <c- p>{</c-> <c- b>int</c-> <c- n>x1</c-><c- p>;</c-> <c- p>}</c-></code> to not be ill-formed</p>
-    <li data-md>
-     <p>Some sort of deterministic <code class="highlight"><c- n>__UUID__</c-></code> or <code class="highlight"><c- n>__UNIQUE__</c-></code> macro that is tied to the file and line</p>
-   </ul>
-   <p>Most of these would not be practical, would add boilerplate, or would introduce substantial complexity.</p>
-   <h4 class="heading settled" data-level="5.3.2" id="proposed-solution"><span class="secno">5.3.2. </span><span class="content">Proposed Solution</span><a class="self-link" href="#proposed-solution"></a></h4>
-   <p>This paper proposes no fundamental changes to existing <code class="highlight"><c- n>__COUNTER__</c-></code> functionality or language semantics. Instead,
-unique identifiers for variables in header-<code class="highlight"><c- kr>inline</c-></code> functions should be solved by:</p>
-   <ol>
-    <li data-md>
-     <p>Modules, where <code class="highlight"><c- n>__COUNTER__</c-></code> is module-local</p>
-    <li data-md>
-     <p>The <code class="highlight"><c- n>_</c-></code> placeholder <a data-link-type="biblio" href="#biblio-p2169" title="A nice placeholder with no name">[P2169]</a>, which is ODR-friendly</p>
-   </ol>
-   <p>This proposal does not preclude additional functionality or other approaches to make <code class="highlight"><c- n>__COUNTER__</c-></code> more ODR-friendly at
-a later time.</p>
-   <h5 class="heading settled" data-level="5.3.2.1" id="is-__counter__-still-needed"><span class="secno">5.3.2.1. </span><span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span><a class="self-link" href="#is-__counter__-still-needed"></a></h5>
-   <p><code class="highlight"><c- n>_</c-></code> is largely sufficient for uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the case of local identifiers, however, it does not cover
-use-cases of <code class="highlight"><c- n>__COUNTER__</c-></code> in namespace-scoped identifiers.</p>
-   <p>As an example of use of <code class="highlight"><c- n>__COUNTER__</c-></code> outside local functions, google benchmark uses uniquely-named identifiers at
-namespace-scope to register benchmark functions:</p>
-<pre class="language-cpp highlight"><c- c1>// after preprocessor expansion:</c->
-<c- k>static</c-> <c- o>::</c-><c- n>benchmark</c-><c- o>::</c-><c- n>internal</c-><c- o>::</c-><c- n>Benchmark</c-><c- o>*</c-> <c- n>_benchmark_2FooBar</c-> <c- n>__attribute__</c-><c- p>((</c-><c- n>unused</c-><c- p>))</c-> <c- o>=</c->
-    <c- p>(</c->
-        <c- o>::</c-><c- n>benchmark</c-><c- o>::</c-><c- n>internal</c-><c- o>::</c-><c- n>RegisterBenchmarkInternal</c-><c- p>(</c->
-            <c- k>new</c-> <c- o>::</c-><c- n>benchmark</c-><c- o>::</c-><c- n>internal</c-><c- o>::</c-><c- n>FunctionBenchmark</c-><c- p>(</c-><c- s>"FooBar"</c-><c- p>,</c-> <c- n>FooBar</c-><c- p>)</c->
-        <c- p>)</c->
-    <c- p>);</c->
-</pre>
-   <p>An alternative to <code class="highlight"><c- n>__COUNTER__</c-></code> in cases such as this would be to standardize <code class="highlight"><c- n>__attribute__</c-><c- p>((</c-><c- n>constructor</c-><c- p>))</c-></code>. Google
-benchmark does not rely on <code class="highlight"><c- n>_benchmark_2FooBar</c-></code> to manage any objects, it is a pure constructor, however, in cases where
-an object is managed and possibly needs to be destructed at the end of a program the approach of a namespace-scoped
-variable has the benefit of consolidating constructor and destructor logic around an object, as opposed to managing an
-object between free functions and a variable, e.g.:</p>
-<pre class="language-cpp highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>Foo</c-><c- o>></c-> <c- n>obj</c-><c- p>;</c->
-<c- n>__attribute__</c-><c- p>((</c-><c- n>constructor</c-><c- p>))</c-> <c- b>void</c-> <c- n>obj_setup</c-><c- p>()</c-> <c- p>{</c->
-    <c- n>obj</c-> <c- o>=</c-> <c- n>setup_foo</c-><c- p>();</c->
-<c- p>}</c->
-<c- d>/* possibly a destructor too */</c->
-<c- c1>// vs</c->
-<c- n>Foo</c-> <c- n>obj</c-> <c- o>=</c-> <c- n>setup_foo</c-><c- p>();</c->
-<c- d>/* or some raii-wrapper around Foo if additional destruction logic is needed beyond normal */</c->
-</pre>
-   <p>While <code class="highlight"><c- n>_</c-></code> does cover much of the use of <code class="highlight"><c- n>__COUNTER__</c-></code>, it is still useful for standardization due to existing widespread
-use, unique identifiers outside inline functions, and other uses of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond unique identifiers.</p>
-   <h3 class="heading settled" data-level="5.4" id="range-and-overflow"><span class="secno">5.4. </span><span class="content">Range and Overflow</span><a class="self-link" href="#range-and-overflow"></a></h3>
+ODR diagnostics. Similar ODR issues can occur as a result of <code class="highlight"><c- n>__DATE__</c-></code> and <code class="highlight"><c- n>__TIME__</c-></code>.</p>
+   <h3 class="heading settled" data-level="4.4" id="range-and-overflow"><span class="secno">4.4. </span><span class="content">Range and Overflow</span><a class="self-link" href="#range-and-overflow"></a></h3>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> is implemented with an <code class="highlight"><c- b>unsigned</c-></code> counter in GCC and Clang and both implementations wrap around to zero
 when that counter overflows. This paper recommends <code class="highlight"><c- n>__COUNTER__</c-></code> shall be able to attain a value of at
-least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error on overflow.</p>
-   <h2 class="heading settled" data-level="6" id="proposed-wording"><span class="secno">6. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
+least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an overflow behavior of wrapping to zero.</p>
+   <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
-   <p>Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 3:</p>
+   <p>Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 1:</p>
    <blockquote>
     <ul>
      <li>
-      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> A <em>decimal literal</em> consisting only of <em>digit</em>s representing the value of a preprocessor-internal
-                counter. The value of the counter starts at <code class="highlight"><c- mi>0</c-></code> and is incremented by <code class="highlight"><c- mi>1</c-></code> each time the <code class="highlight"><c- n>__COUNTER__</c-></code> macro is expanded. The counter shall have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>. If the value of the counter exceeds its implementation-defined
-                maximum value the program is ill-formed. </ins>
+      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> An integer literal that starts at <code class="highlight"><c- mi>0</c-></code> and increments by <code class="highlight"><c- mi>1</c-></code> each time <code class="highlight"><c- n>__COUNTER__</c-></code> is expanded. <code class="highlight"><c- n>__COUNTER__</c-></code> shall have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>.
+                If the value of <code class="highlight"><c- n>__COUNTER__</c-></code> exceeds its implementation-defined maximum value it shall reset to zero. </ins>
     </ul>
    </blockquote>
    <p>Insert a row into Table 22 in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> after the row for <code class="highlight"><c- n>__cpp_constinit</c-></code>:</p>
@@ -2380,15 +2291,6 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       <td>
        <ins><code class="highlight"><c- mi>20</c-><c- n>XXXXL</c-></code></ins>
    </table>
-   <p>Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:</p>
-   <blockquote>
-     The values of the predefined macros (except for <code class="highlight"><c- n>__FILE__</c-></code>
-    <del> and</del>
-    <ins>,</ins>
-     <code class="highlight"><c- n>__LINE__</c-></code>
-    <ins>, and <code class="highlight"><c- n>__COUNTER__</c-></code></ins>
-    ) remain constant throughout the translation unit.
-   </blockquote>
   </main>
 <script>
 (function() {
@@ -2524,9 +2426,4 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
   <dl>
    <dt id="biblio-n4950">[N4950]
    <dd>Thomas Köppe. <a href="https://wg21.link/n4950"><cite>Working Draft, Standard for Programming Language C++</cite></a>. 10 May 2023. URL: <a href="https://wg21.link/n4950">https://wg21.link/n4950</a>
-  </dl>
-  <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
-  <dl>
-   <dt id="biblio-p2169">[P2169]
-   <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf"><cite>A nice placeholder with no name</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf</a>
   </dl>
