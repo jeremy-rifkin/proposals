@@ -11,7 +11,7 @@ Abstract: `__COUNTER__` is a widely-used predefined macro provided as a language
           implementations. This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
 ED: https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_3.html
-!Source: [https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs](https://github.com/jeremy-rifkin/cpp-proposals/blob/main/src/counter.bs)
+!Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs)
 </pre>
 
 # Introduction
