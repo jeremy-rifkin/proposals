@@ -1,0 +1,344 @@
+<pre class='metadata'>
+Title: __COUNTER__
+H1: <code>__COUNTER__</code>
+Group: WG14
+Shortname: nnnn
+Revision: 0
+Status: NP
+Date: 2024-08-31
+Editor: Jeremy Rifkin
+Abstract: `__COUNTER__` is a predefined macro provided as a language extension by most C and C++ implementations. This
+          paper aims to standardize existing practices.
+Markup Shorthands: markdown on
+ED: https://jeremy-rifkin.github.io/proposals/drafts/c/counter-draft-1.html
+!Source: [https://github.com/jeremy-rifkin/proposals/blob/main/c/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/c/counter.bs)
+</pre>
+
+# Introduction
+
+The `__COUNTER__` pre-defined macro is a common language extension for C and C++ which expands to an integer literal
+that starts at `0` and increments by `1` every time it expanded in a translation unit. This is useful for generating
+unique identifiers, unique indices, and other preprocessor metaprogramming uses.
+
+## Previous Proposals
+
+`__COUNTER__` was briefly mentioned previously in *Extensions to the preprocessor for C2Y* [[N3190]]. The meeting
+minutes, [[N3227]], mention brief discussion of `__COUNTER__`'s implications on evaluation order and caching. No polls
+were taken on [[N3190]].
+
+This paper provides a focused proposal on `__COUNTER__` and aims to provide additional context and motivation.
+
+# Rationale for Standardization
+
+`__COUNTER__` is widely available, notably in all the major C and C++ implementations. However, because it's
+non-standard, there is inherent uncertainty surrounding its portability and semantics.
+
+Codebases striving for maximum portability must resort to detection and fallback such as this example from
+[google benchmark](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538):
+
+```c
+// Check that __COUNTER__ is defined and that __COUNTER__ increases by 1
+// every time it is expanded. X + 1 == X + 0 is used in case X is defined to be
+// empty. If X is empty the expression becomes (+1 == +0).
+#if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)
+#define BENCHMARK_PRIVATE_UNIQUE_ID __COUNTER__
+#else
+#define BENCHMARK_PRIVATE_UNIQUE_ID __LINE__
+#endif
+```
+
+In the case of google benchmark, `__LINE__` as a fallback is usually ok due to how `BENCHMARK` macros are used, however,
+this is not an adaquate general-purpsoe replacement.
+
+Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of
+`__COUNTER__` into the official standard in order to provide more clear portability and semantic guarantees.
+
+# Motivating Examples
+
+A brief survey of some uses of `__COUNTER__` in open source C projects:
+
+- Linux uses `__COUNTER__` for, among other things:
+    - Unique identifiers in instrumentation; [link](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/instrumentation.h#L10-L16)
+    - Preventing duplicate inline assembly blocks; [link](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/compiler.h#L112-L133)
+    - Unique identifiers in [initcalls](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/init.h#L208-L214)
+- Systemd uses `__COUNTER__` for unique identifiers in multiple places [link 1](https://github.com/systemd/systemd/blob/ee9a70ccc7a35b224926cfdf2cdac8fc8748a54f/src/libsystemd/sd-bus/bus-error.h#L48-L51) [link 2](https://github.com/systemd/systemd/blob/ee9a70ccc7a35b224926cfdf2cdac8fc8748a54f/src/fundamental/macro-fundamental.h#L148)
+- Netdata uses `__COUNTER__` for [unique identifiers](https://github.com/netdata/netdata/blob/b138d7fc35dbfc5cb30d5c91f85960351eb87beb/src/collectors/systemd-journal.plugin/systemd-units.c#L30-L39)
+- The QMK firmware project uses `__COUNTER__` auto-incrementing endpoint numbers; [link](https://github.com/qmk/qmk_firmware/blob/fd65bd5ae014565d333195285b154d9eeca9294b/tmk_core/protocol/usb_descriptor.h#L201)
+- Yabai, a macOS window manager, uses `__COUNTER__` for unique indices in timing utilities; [link](https://github.com/koekeishiya/yabai/blob/a4062be1d28c54489400d8b84175fba271423497/src/misc/timer.h#L136-L142)
+- Drgn, a programmable debugger, uses `__COUNTER__` for unique identifiers througout the codebase; [link](https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222)
+- Metric Panda Games uses `__COUNTER__` for [lookup tables](https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/) as part of a localization and compile-time string hashing system.
+
+Many additional uses include use for static assertions, however, that use case is now covered by the standard.
+
+`__COUNTER__` is of interest in C++ as well:
+
+- Google benchmark uses `__COUNTER__` for [unique identifiers](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538), falling back to `__LINE__` if `__COUNTER__` isn't present or doesn't behave as expected
+- Google Orbit uses `__COUNTER__` for [unique identifiers](https://github.com/google/orbit/blob/d863597a5c15cd0930bf9dd63b0451e2327e105e/src/ApiInterface/include/ApiInterface/Orbit.h#L411)
+- LLVM uses `__COUNTER__` for [unique identifiers](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/builtins/int_util.h#L26) as well as in sanitizer code to [prevent ICF](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/sanitizer_common/sanitizer_win_dll_thunk.h#L55)
+- Catch2 uses `__COUNTER__` for [unique identifiers](https://github.com/catchorg/Catch2/blob/fa306fc85eca7cc68a5362c503019fa823cbe411/src/catch2/internal/catch_unique_name.hpp#L15), falling back to `__LINE__`
+- Tensorflow uses `__COUNTER__` extensively, primarily for [unique identifiers](https://github.com/tensorflow/tensorflow/blob/58ee1a52795980c22ea154395ad17e09683ebff8/tensorflow/c/tf_status_helper.h#L50)
+- Chromium uses `__COUNTER__` for unique identifier generation, e.g. in [crash logging code](https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180), as well as for creating <a href="https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34">unique tags for `ABORT()`s</a>
+- Folly uses `__COUNTER__` for [unique identifiers](https://github.com/facebook/folly/blob/4550c4cd46a91e7bef9d348cad91dd1b07a876c8/folly/Preprocessor.h#L82-L103), falling back to `__LINE__` if not present
+- v8 uses `__COUNTER__` for [unique identifiers](https://github.com/v8/v8/blob/04c9912de3373fa4779890fa70bf5bae670c61c8/src/base/macros.h#L24)
+
+Many use cases in C++ are covered by the newly standardized `_` placeholder, however, not all cases for unique
+identifiers are.
+
+# Implementation Support
+
+`__COUNTER__` has long been supported by all major implementations of C and C++:
+
+<style>
+table, th, td {
+    border: none;
+}
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid black;
+}
+tbody tr:nth-child(even) {
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
+}
+</style>
+
+<table>
+    <thead>
+        <tr>
+            <th>Compiler</th>
+            <th>Earliest Version On Compiler Explorer</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>GCC</td>
+            <td>3.4.6 ❌ (earliest version supporting `__COUNTER__`: 4.4.7 ✔️)</td>
+        </tr>
+        <tr>
+            <td>Clang</td>
+            <td>3.0.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>MSVC</td>
+            <td>19.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>ICC</td>
+            <td>13.0.1 ✔️</td>
+        </tr>
+        <tr>
+            <td>ICX</td>
+            <td>2021.1.2 ✔️</td>
+        </tr>
+        <tr>
+            <td>cc65</td>
+            <td>2.17 ❌</td>
+        </tr>
+        <tr>
+            <td>Chibicc</td>
+            <td>2020-12-07 ✔️</td>
+        </tr>
+        <tr>
+            <td>CompCert</td>
+            <td>3.9 ✔️</td>
+        </tr>
+        <tr>
+            <td>Cproc</td>
+            <td>Trunk ✔️</td>
+        </tr>
+        <tr>
+            <td>EDG</td>
+            <td>6.5 🟡</td>
+        </tr>
+        <tr>
+            <td>Movfuscator</td>
+            <td>Trunk ✔️</td>
+        </tr>
+        <tr>
+            <td>ppci</td>
+            <td>0.5.5 ❌</td>
+        </tr>
+        <tr>
+            <td>SDCC</td>
+            <td>4.0.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>TCC</td>
+            <td>0.9.27 ✔️</td>
+        </tr>
+        <tr>
+            <td>TenDRA</td>
+            <td>Trunk ❌</td>
+        </tr>
+        <tr>
+            <td>z88dk</td>
+            <td>2.2 ✔️</td>
+        </tr>
+        <tr>
+            <td>Zig cc</td>
+            <td>0.6.0 ✔️</td>
+        </tr>
+    </tbody>
+</table>
+
+🟡: Supported only outside standards mode, requiring either microsoft, GCC, or Clang emulation mode to be enabled
+(controlled with `--microsoft`, `--g++`, and `--clang` respectively).
+
+Comparison: [https://godbolt.org/z/Mx4MznMaY](https://godbolt.org/z/Mx4MznMaY)
+
+# Design Considerations
+
+## Precompiled Headers
+
+MSVC and GCC save the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
+expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.
+
+This paper proposes no change to the current behavior.
+
+## Unspecified Behavior
+
+It's possible to inadvertently encounter unspecified behavior due to counter `__COUNTER__`:
+
+```c
+// foobar.h
+int bar();
+// a.c
+#include "foobar.h"
+inline int foo(void) {
+    return __COUNTER__;
+}
+int bar(void) {
+    return foo();
+}
+// main.c
+#include <stdio.h>
+#include "foobar.h"
+void unused(void) {
+    __COUNTER__;
+}
+int foo(void) {
+    return __COUNTER__;
+}
+int main(void) {
+    printf("%d\n", bar());
+}
+```
+
+While this is worth noting, it should not present substantial footguns given existing practice and typical use of
+`__COUNTER__`.
+
+## Evaluation Order and Caching
+
+Meeting notes for [[N3190]] mention brief discussion of `__COUNTER__` making evaluation order and caching observable and
+leading to divergence between compiler test cases [[N3227]].
+
+The evaluation order question is similar to existing expression evaluation order observability. Experience from existing
+practice has shown this doesn't pose a substantial concern or footgun, especially given the typical use for
+`__COUNTER__` which is unique identifiers/indices.
+
+When it comes to caching, a conforming implementation would need to take care to not cache macro expansions involving
+`__COUNTER__`.
+
+## Argument Handling
+
+If passes as a parameter in a macro, `__COUNTER__` should only be incremented once. This paper proposes the following
+case should produce `0 0`, which is the current behavior on all compilers except chibicc which produces `0 1`.
+
+```c
+#define X(Z) Z Z
+X(__COUNTER__)
+```
+
+In the case of an unused argument, `__COUNTER__` should not be expanded and not result in an increment. This is the
+current behavior for all compilers tested on Compiler Explorer.
+
+```c
+#define FOO(X)
+FOO(__COUNTER__)
+__COUNTER__ // 0
+```
+
+Additionally in the case of `__VA_OPT__` but no use of `__VA_ARGS__`, an expansion of `__COUNTER__` and subsequent
+increment should occur. Currently Clang diverges from MSVC and GCC, producing `0` in the following example while the
+others produce `1`:
+
+```c
+#define X(...) __VA_OPT__()
+X(__COUNTER__)
+__COUNTER__
+```
+
+Notably, Clang produces the desired output in the following example:
+
+```c
+#define X(...) __VA_OPT__(a)
+X(__COUNTER__)
+__COUNTER__ // 1
+```
+
+## Range and Overflow
+
+`__COUNTER__` is currently implemented with an `unsigned` counter in GCC and Clang and both implementations wrap around
+to zero when that counter overflows. This paper recommends `__COUNTER__` shall be able to attain a value of at
+least <nobr>2<sup>32</sup> - 1</nobr> with an error on overflow.
+
+# Proposed Wording
+
+Proposed wording relative to [[!N3096]]:
+
+Update 6.10.9 paragraph 1:
+
+<blockquote>
+    The values of the predefined macros listed in the following subclauses<sup>225)</sup> (except for `__FILE__`<del>
+    and</del><ins>, </ins> `__LINE__`<ins>, and `__COUNTER__`, </ins> ) remain constant throughout the translation unit.
+</blockquote>
+
+Insert an entry into 6.10.9.1 paragraph 1 before `__DATE__`:
+
+<blockquote>
+    <table>
+        <tr>
+            <td>
+                <ins>`__COUNTER__`</ins>
+            </td>
+            <td>
+                <ins>A *decimal-constant* consisting only of *digit*s representing the value of a preprocessor-internal
+                counter. The value of the counter starts at `0` and is incremented by `1` each time the `__COUNTER__`
+                macro is expanded. The counter shall have a maximum value of at least
+                <nobr>2<sup>32</sup> - 1</nobr></nobr>. The value of the counter shall not exceed its
+                implementation-defined maximum value. If `__COUNTER__` is present in the argument to any
+                <i>function-like macro</i> the counter shall only be incremented once per replacement of that
+                argument.</ins>
+            </td>
+        </tr>
+    </table>
+</blockquote>
+
+<pre class="biblio">
+{
+    "N3096": {
+        "title": "Programming languages — C",
+        "href": "https://open-std.org/JTC1/SC22/WG14/www/docs/n3096.pdf"
+    },
+    "N3190": {
+        "title": "Extensions to the preprocessor for C2Y",
+        "href": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3190.htm"
+    },
+    "N3227": {
+        "title": "Draft Minutes for 22–26 January, 2024",
+        "href": "https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm"
+    }
+}
+</pre>
