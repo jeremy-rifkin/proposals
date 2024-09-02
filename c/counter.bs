@@ -5,12 +5,12 @@ Group: WG14
 Shortname: nnnn
 Revision: 0
 Status: NP
-Date: 2024-08-31
+Date: 2024-09-01
 Editor: Jeremy Rifkin
 Abstract: `__COUNTER__` is a predefined macro provided as a language extension by most C and C++ implementations. This
           paper aims to standardize existing practices.
 Markup Shorthands: markdown on
-ED: https://jeremy-rifkin.github.io/proposals/drafts/c/counter-draft-1.html
+ED: https://jeremy-rifkin.github.io/proposals/drafts/c/counter.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/c/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/c/counter.bs)
 </pre>
 
@@ -30,8 +30,8 @@ This paper provides a focused proposal on `__COUNTER__` and aims to provide addi
 
 # Rationale for Standardization
 
-`__COUNTER__` is widely available, notably in all the major C and C++ implementations. However, because it's
-non-standard, there is inherent uncertainty surrounding its portability and semantics.
+`__COUNTER__` is widely available, notably in all the major C and C++ implementations. However, there is inherent
+uncertainty surrounding its portability and semantics due to it not being standard.
 
 Codebases striving for maximum portability must resort to detection and fallback such as this example from
 [google benchmark](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538):
@@ -47,8 +47,11 @@ Codebases striving for maximum portability must resort to detection and fallback
 #endif
 ```
 
-In the case of google benchmark, `__LINE__` as a fallback is usually ok due to how `BENCHMARK` macros are used, however,
-this is not an adaquate general-purpsoe replacement.
+In the case of google benchmark, `__LINE__` as a fallback is usually sufficient due to how `BENCHMARK` macros are used,
+however, this is not an adaquate general-purpsoe replacement.
+
+While most implementations provide `__COUNTER__` with unsurprising semantics there is some minor implementation
+divergence in handling, especially around function-like macro arguments.
 
 Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of
 `__COUNTER__` into the official standard in order to provide more clear portability and semantic guarantees.
@@ -236,32 +239,33 @@ int main(void) {
 }
 ```
 
-While this is worth noting, it should not present substantial footguns given existing practice and typical use of
-`__COUNTER__`.
+While this case is worth considering, it should not present substantial footguns given existing practice and typical use
+of `__COUNTER__` and this paper proposes no change to the current behavior.
 
 ## Evaluation Order and Caching
 
 Meeting notes for [[N3190]] mention brief discussion of `__COUNTER__` making evaluation order and caching observable and
 leading to divergence between compiler test cases [[N3227]].
 
-The evaluation order question is similar to existing expression evaluation order observability. Experience from existing
-practice has shown this doesn't pose a substantial concern or footgun, especially given the typical use for
-`__COUNTER__` which is unique identifiers/indices.
+The evaluation order consideration is similar to existing expression evaluation order observability. Experience from
+existing practice has shown this doesn't pose a substantial concern or footgun, especially given the typical use for
+`__COUNTER__` which is unique identifiers/indices. When it comes to caching, a conforming implementation would need to
+take care to not cache macro expansions involving `__COUNTER__`.
 
-When it comes to caching, a conforming implementation would need to take care to not cache macro expansions involving
-`__COUNTER__`.
+This paper proposes no change to the current behavior.
 
 ## Argument Handling
 
-If passes as a parameter in a macro, `__COUNTER__` should only be incremented once. This paper proposes the following
-case should produce `0 0`, which is the current behavior on all compilers except chibicc which produces `0 1`.
+If passes as an argument to a function-like macro, multiple expansions of an argument including `__COUNTER__` should
+expand to the same token sequence. This paper proposes the following case should produce `0 0`, which is the current
+behavior on all compilers tested on Compiler Explorer except Chibicc which produces `0 1`.
 
 ```c
 #define X(Z) Z Z
-X(__COUNTER__)
+X(__COUNTER__) // 0 0
 ```
 
-In the case of an unused argument, `__COUNTER__` should not be expanded and not result in an increment. This is the
+In the case of an unused argument, `__COUNTER__` will not be expanded and not result in an increment. This is the
 current behavior for all compilers tested on Compiler Explorer.
 
 ```c
@@ -277,7 +281,7 @@ others produce `1`:
 ```c
 #define X(...) __VA_OPT__()
 X(__COUNTER__)
-__COUNTER__
+__COUNTER__ // 1
 ```
 
 Notably, Clang produces the desired output in the following example:
@@ -286,6 +290,20 @@ Notably, Clang produces the desired output in the following example:
 #define X(...) __VA_OPT__(a)
 X(__COUNTER__)
 __COUNTER__ // 1
+```
+
+If used by the stringizing operator or token pasting operator, `__COUNTER__` should not be incremented. This is the
+current behavior on all compilers tested on compiler explorer.
+
+```c
+#define STR(X) #X
+STR(__COUNTER__) // "__COUNTER__"
+#define CONCAT(X) A##X
+CONCAT(__COUNTER__) // A__COUNTER__
+__COUNTER__ // 0
+#define CONCAT2(X) A##X X
+CONCAT2(__COUNTER__) // A__COUNTER__ 1
+__COUNTER__ // 2
 ```
 
 ## Range and Overflow
@@ -298,14 +316,28 @@ least <nobr>2<sup>32</sup> - 1</nobr> with an error on overflow.
 
 Proposed wording relative to [[!N3096]]:
 
+Update the second bullet point in 6.10.4.1 paragraph 4:
+
+<blockquote>
+    <ul>
+        <li>
+            Otherwise, the replacement preprocessing tokens are the preprocessing tokens of the corresponding argument
+            after all macros contained therein have been expanded. <ins>This expansion shall be observed to occur no
+            more than once per argument.</ins> The argument's preprocessing tokens are completely macro replaced before
+            being substituted as if they formed the rest of the preprocessing file with no other preprocessing tokens
+            being available.
+        </li>
+    </ul>
+</blockquote>
+
 Update 6.10.9 paragraph 1:
 
 <blockquote>
     The values of the predefined macros listed in the following subclauses<sup>225)</sup> (except for `__FILE__`<del>
-    and</del><ins>, </ins> `__LINE__`<ins>, and `__COUNTER__`, </ins> ) remain constant throughout the translation unit.
+    and</del><ins>, </ins> `__LINE__`<ins>, and `__COUNTER__`</ins>) remain constant throughout the translation unit.
 </blockquote>
 
-Insert an entry into 6.10.9.1 paragraph 1 before `__DATE__`:
+Insert an entry into 6.10.9.1 before `__DATE__`:
 
 <blockquote>
     <table>
@@ -318,9 +350,7 @@ Insert an entry into 6.10.9.1 paragraph 1 before `__DATE__`:
                 counter. The value of the counter starts at `0` and is incremented by `1` each time the `__COUNTER__`
                 macro is expanded. The counter shall have a maximum value of at least
                 <nobr>2<sup>32</sup> - 1</nobr></nobr>. The value of the counter shall not exceed its
-                implementation-defined maximum value. If `__COUNTER__` is present in the argument to any
-                <i>function-like macro</i> the counter shall only be incremented once per replacement of that
-                argument.</ins>
+                implementation-defined maximum value.</ins>
             </td>
         </tr>
     </table>
