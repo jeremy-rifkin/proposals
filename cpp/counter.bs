@@ -5,26 +5,35 @@ Group: WG21
 Shortname: Pnnnn
 Revision: 0
 Status: NP
-Date: 2024-08-21
+Date: 2024-09-02
 Editor: Jeremy Rifkin
-Abstract: `__COUNTER__` is a widely-used predefined macro provided as a language extension by all major C and C++
-          implementations. This paper aims to standardize existing practices.
+Abstract: `__COUNTER__` is a predefined macro provided as a language extension by all major C and C++ implementations.
+          This paper aims to standardize existing practices.
 Markup Shorthands: markdown on
-ED: https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_3.html
+ED: https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_4.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs)
 </pre>
 
 # Introduction
 
-The `__COUNTER__` pre-defined macro is a language extension for C and C++ which expands to an integer literal that
-starts at `0` and increments by `1` every time it expanded in a translation unit. This is a widely-used utility that
-is primarily useful for generating unique identifiers with the preprocessor.
+The `__COUNTER__` pre-defined macro is a common language extension for C and C++ which expands to an integer literal
+that starts at `0` and increments by `1` every time it expanded in a translation unit. This is useful for generating
+unique identifiers, generating unique indices, and other preprocessor metaprogramming uses.
+
+# Previous Proposals
+
+`__COUNTER__` has not been proposed to WG21, however, it was briefly mentioned previously in *Extensions to the
+preprocessor for C2Y* [[N3190]]. The meeting minutes, [[N3227]], mention brief discussion of `__COUNTER__`'s
+implications on evaluation order and caching. No polls were taken on [[N3190]].
+
+This paper provides a focused proposal on `__COUNTER__` and aims to provide additional context and motivation.
 
 # Rationale for Standardization
 
-`__COUNTER__` is de-facto portable today. Nearly every implementation supports it with unsurprising semantics. However,
-its lack of standardization results in uncertainty about its portability and semantics. For example, libraries striving
-for maximum portability must resort to detection and fallback such as this example from
+`__COUNTER__` is de-facto portable today. Every major implementation supports it with unsurprising semantics. However,
+there is inherent uncertainty surrounding its portability and semantics due to it not being standardized.
+
+Codebases striving for maximum portability must resort to detection and fallback such as this example from
 [google benchmark](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538):
 
 ```cpp
@@ -38,19 +47,27 @@ for maximum portability must resort to detection and fallback such as this examp
 #endif
 ```
 
-Meanwhile other libraries and C++ developers avoid it altogether due to this uncertainty. While every compiler today
-supports `__COUNTER__` it's not always enabled. For example, EDG only provides it outside of standards mode. In the
-absence of cautious checking and fallback, a developer must consult numerous widely used C++ implementations to convince
-themselves that `__COUNTER__` exists and does what they want.
+Meanwhile other C++ codebases avoid it altogether due to this uncertainty. In the absence of cautious checking and
+fallback, a developer must consult numerous widely used C++ implementations to convince themselves that `__COUNTER__`
+exists and does what they want.
 
-Due to its widespread nature, it would be useful to define the semantics of `__COUNTER__` as part of the official
-standard. Standardizing `__COUNTER__` makes existing use more clearly defined and portable while also providing a useful
-utility as a standard language feature.
+Additionally, while every major C++ compiler today supports `__COUNTER__`, it's not always enabled. For example, EDG
+only provides it outside of standards mode.
+
+Minor divergences in `__COUNTER__` semantics are observable, see [[#argument-handling]], though these do not impact
+most use cases.
+
+In the case of google benchmark, `__LINE__` is an adequate fallback due to how `BENCHMARK` macros are typically used.
+However, this is not an adaquate general-purpose replacement due to it not being unique in the general case.
+
+Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of
+`__COUNTER__` into the official standard in order to provide more clear portability and semantic guarantees.
 
 # Motivating Examples
 
 A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 
+**C++:**
 - Google benchmark uses `__COUNTER__` for [unique identifiers](https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538), falling back to `__LINE__` if `__COUNTER__` isn't present or doesn't behave as expected
 - Google Orbit uses `__COUNTER__` for [unique identifiers](https://github.com/google/orbit/blob/d863597a5c15cd0930bf9dd63b0451e2327e105e/src/ApiInterface/include/ApiInterface/Orbit.h#L411)
 - LLVM uses `__COUNTER__` for [unique identifiers](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/builtins/int_util.h#L26) as well as in sanitizer code to [prevent ICF](https://github.com/llvm/llvm-project/blob/c557d8520413476221a4f3bf2b7b3fed17681691/compiler-rt/lib/sanitizer_common/sanitizer_win_dll_thunk.h#L55)
@@ -59,7 +76,20 @@ A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 - Chromium uses `__COUNTER__` for unique identifier generation, e.g. in [crash logging code](https://github.com/chromium/chromium/blob/d2fdda68e8c5489cd8bbd7f81b423d54ddc3f588/base/debug/crash_logging.h#L121-L180), as well as for creating <a href="https://github.com/chromium/chromium/blob/818c1de64ccf78e98cca71b793642eb4bc623f2e/sandbox/mac/sandbox_logging.cc#L21-L34">unique tags for `ABORT()`s</a>
 - Folly uses `__COUNTER__` for [unique identifiers](https://github.com/facebook/folly/blob/4550c4cd46a91e7bef9d348cad91dd1b07a876c8/folly/Preprocessor.h#L82-L103), falling back to `__LINE__` if not present
 - v8 uses `__COUNTER__` for [unique identifiers](https://github.com/v8/v8/blob/04c9912de3373fa4779890fa70bf5bae670c61c8/src/base/macros.h#L24)
+
+**C:**
+- Linux uses `__COUNTER__` for, among other things:
+    - Unique identifiers in instrumentation; [link](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/instrumentation.h#L10-L16)
+    - Preventing duplicate inline assembly blocks; [link](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/compiler.h#L112-L133)
+    - Unique identifiers in [initcalls](https://github.com/torvalds/linux/blob/d5d547aa7b51467b15d9caa86b116f8c2507c72a/include/linux/init.h#L208-L214)
+- Systemd uses `__COUNTER__` for unique identifiers in multiple places [link 1](https://github.com/systemd/systemd/blob/ee9a70ccc7a35b224926cfdf2cdac8fc8748a54f/src/libsystemd/sd-bus/bus-error.h#L48-L51) [link 2](https://github.com/systemd/systemd/blob/ee9a70ccc7a35b224926cfdf2cdac8fc8748a54f/src/fundamental/macro-fundamental.h#L148)
+- Netdata uses `__COUNTER__` for [unique identifiers](https://github.com/netdata/netdata/blob/b138d7fc35dbfc5cb30d5c91f85960351eb87beb/src/collectors/systemd-journal.plugin/systemd-units.c#L30-L39)
+- The QMK firmware project uses `__COUNTER__` auto-incrementing endpoint numbers; [link](https://github.com/qmk/qmk_firmware/blob/fd65bd5ae014565d333195285b154d9eeca9294b/tmk_core/protocol/usb_descriptor.h#L201)
+- Yabai, a macOS window manager, uses `__COUNTER__` for unique indices in timing utilities; [link](https://github.com/koekeishiya/yabai/blob/a4062be1d28c54489400d8b84175fba271423497/src/misc/timer.h#L136-L142)
+- Drgn, a programmable debugger, uses `__COUNTER__` for unique identifiers througout the codebase; [link](https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222)
 - Metric Panda Games uses `__COUNTER__` for [lookup tables](https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/) as part of a localization and compile-time string hashing system.
+
+Many additional uses include use for static assertions, however, that use case is now covered by C23.
 
 # Implementation Support
 
@@ -95,50 +125,33 @@ tbody tr:nth-child(even) {
     <thead>
         <tr>
             <th>Compiler</th>
-            <th>Earliest Version Tested</th>
-            <th>Earliest Version Tested<br/>Supporting `__COUNTER__`</th>
+            <th>Earliest Version On Compiler Explorer</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>GCC</td>
-            <td>3.4.6 ❌</td>
-            <td>4.4.7 ✔️</td>
+            <td>3.4.6 ❌ (earliest version supporting `__COUNTER__`: 4.4.7 ✔️)</td>
         </tr>
         <tr>
             <td>Clang</td>
-            <td>3.0.0 ✔️</td>
             <td>3.0.0 ✔️</td>
         </tr>
         <tr>
             <td>MSVC</td>
             <td>19.0 ✔️</td>
-            <td>19.0 ✔️</td>
         </tr>
         <tr>
             <td>ICC</td>
-            <td>13.0.1 ✔️</td>
             <td>13.0.1 ✔️</td>
         </tr>
         <tr>
             <td>ICX</td>
             <td>2021.1.2 ✔️</td>
-            <td>2021.1.2 ✔️</td>
         </tr>
         <tr>
             <td>EDG</td>
             <td>6.5 🟡</td>
-            <td>6.5 🟡</td>
-        </tr>
-        <tr>
-            <td>TCC</td>
-            <td>0.9.27 ✔️</td>
-            <td>0.9.27 ✔️</td>
-        </tr>
-        <tr>
-            <td>Movfuscator</td>
-            <td>Trunk ✔️</td>
-            <td>Trunk ✔️</td>
         </tr>
     </tbody>
 </table>
@@ -147,6 +160,68 @@ tbody tr:nth-child(even) {
 (controlled with `--microsoft`, `--g++`, and `--clang` respectively).
 
 Comparison: [https://godbolt.org/z/fqTs9sWx6](https://godbolt.org/z/fqTs9sWx6)
+
+Additionally, C compiler support excluding duplicates from above:
+<table>
+    <thead>
+        <tr>
+            <th>Compiler</th>
+            <th>Earliest Version On Compiler Explorer</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>cc65</td>
+            <td>2.17 ❌</td>
+        </tr>
+        <tr>
+            <td>Chibicc</td>
+            <td>2020-12-07 ✔️</td>
+        </tr>
+        <tr>
+            <td>CompCert</td>
+            <td>3.9 ✔️</td>
+        </tr>
+        <tr>
+            <td>Cproc</td>
+            <td>Trunk ✔️</td>
+        </tr>
+        <tr>
+            <td>EDG</td>
+            <td>6.5 🟡</td>
+        </tr>
+        <tr>
+            <td>Movfuscator</td>
+            <td>Trunk ✔️</td>
+        </tr>
+        <tr>
+            <td>ppci</td>
+            <td>0.5.5 ❌</td>
+        </tr>
+        <tr>
+            <td>SDCC</td>
+            <td>4.0.0 ✔️</td>
+        </tr>
+        <tr>
+            <td>TCC</td>
+            <td>0.9.27 ✔️</td>
+        </tr>
+        <tr>
+            <td>TenDRA</td>
+            <td>Trunk ❌</td>
+        </tr>
+        <tr>
+            <td>z88dk</td>
+            <td>2.2 ✔️</td>
+        </tr>
+        <tr>
+            <td>Zig cc</td>
+            <td>0.6.0 ✔️</td>
+        </tr>
+    </tbody>
+</table>
+
+Comparison: [https://godbolt.org/z/Mx4MznMaY](https://godbolt.org/z/Mx4MznMaY)
 
 # Design Considerations
 
@@ -207,6 +282,8 @@ Current implementations do not make any special attempt to diagnose or prevent s
 ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`. While existing practice is that
 these ODR issues exist, it is worthwhile looking at possible solutions to the problem.
 
+The C semantics for `inline` have similar concerns however it can only result in unspecified behavior.
+
 ### Possible Solutions
 
 This is a difficult problem to solve due to the nature of `__COUNTER__` and how the preprocessor interacts with the rest
@@ -236,7 +313,7 @@ a later time.
 `_` is largely sufficient for uses of `__COUNTER__` in the case of local identifiers, however, it does not cover
 use-cases of `__COUNTER__` in namespace-scoped identifiers.
 
-As an example of use of `__COUNTER__` outside local functions, google benchmark uses uniquely-named identifiers at
+As an example of use of `__COUNTER__` beyond local identifiers google benchmark uses uniquely-named identifiers at
 namespace-scope to register benchmark functions:
 
 ```cpp
@@ -261,13 +338,80 @@ __attribute__((constructor)) void obj_setup() {
     obj = setup_foo();
 }
 /* possibly a destructor too */
-// vs
+```
+vs:
+```cpp
 Foo obj = setup_foo();
 /* or some raii-wrapper around Foo if additional destruction logic is needed beyond normal */
 ```
 
-While `_` does cover much of the use of `__COUNTER__`, it is still useful for standardization due to existing widespread
-use, unique identifiers outside inline functions, and other uses of `__COUNTER__` beyond unique identifiers.
+While `_` covers many uses of `__COUNTER__`, the preprocessor utility continues to be useful due to existing practice,
+uses outside local identifiers, other preprocessor metaprogramming uses of `__COUNTER__` beyond unique identifiers, and
+due to use in C.
+
+## Evaluation Order and Caching
+
+Meeting notes for [[N3190]] mention brief discussion of `__COUNTER__` making evaluation order and caching observable and
+leading to divergence between compiler test cases [[N3227]].
+
+The evaluation order consideration is similar to existing expression evaluation order observability. Experience from
+existing practice has shown this doesn't pose a substantial concern or footgun, especially given the typical use for
+`__COUNTER__` which is unique identifiers/indices. When it comes to caching, a conforming implementation would need to
+take care to not cache macro expansions involving `__COUNTER__`.
+
+This paper proposes no change to the current behavior.
+
+## Argument Handling
+
+If passes as an argument to a function-like macro, multiple expansions of an argument including `__COUNTER__` should
+expand to the same token sequence. This paper proposes the following case should produce `0 0`, which is the current
+behavior on all compilers tested on Compiler Explorer except Chibicc which produces `0 1`.
+
+```c
+#define X(Z) Z Z
+X(__COUNTER__) // 0 0
+```
+
+In the case of an unused argument, `__COUNTER__` will not be expanded and not result in an increment. This is the
+current behavior for all compilers tested on Compiler Explorer.
+
+```c
+#define FOO(X)
+FOO(__COUNTER__)
+__COUNTER__ // 0
+```
+
+Additionally in the case of `__VA_OPT__` but no use of `__VA_ARGS__`, an expansion of `__COUNTER__` and subsequent
+increment should occur. Currently Clang diverges from MSVC and GCC, producing `0` in the following example while the
+others produce `1`:
+
+```c
+#define X(...) __VA_OPT__()
+X(__COUNTER__)
+__COUNTER__ // 1
+```
+
+Notably, Clang produces the desired output in the following example:
+
+```c
+#define X(...) __VA_OPT__(a)
+X(__COUNTER__)
+__COUNTER__ // 1
+```
+
+If used by the stringizing operator or token pasting operator, `__COUNTER__` should not be incremented. This is the
+current behavior on all compilers tested on compiler explorer.
+
+```c
+#define STR(X) #X
+STR(__COUNTER__) // "__COUNTER__"
+#define CONCAT(X) A##X
+CONCAT(__COUNTER__) // A__COUNTER__
+__COUNTER__ // 0
+#define CONCAT2(X) A##X X
+CONCAT2(__COUNTER__) // A__COUNTER__ 1
+__COUNTER__ // 2
+```
 
 ## Range and Overflow
 
@@ -279,6 +423,18 @@ least <nobr>2<sup>32</sup> - 1</nobr> with an error on overflow.
 
 Proposed wording relative to [[!N4950]]:
 
+Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/lex.icon">[lex.icon]</a>:
+
+<blockquote>
+    <pre>
+        <ins>
+        digit-sequence:
+            digit
+            digit-sequence digit
+        </ins>
+    </pre>
+</blockquote>
+
 Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 3:
 
 <blockquote>
@@ -286,11 +442,10 @@ Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.
         <li>
             <ins>
                 `__COUNTER__`<br/>
-                A *decimal literal* consisting only of *digit*s representing the value of a preprocessor-internal
-                counter. The value of the counter starts at `0` and is incremented by `1` each time the `__COUNTER__`
-                macro is expanded. The counter shall have a maximum value of at least
-                <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of the counter exceeds its implementation-defined
-                maximum value the program is ill-formed.
+                A *digit-sequence* representing the value of a preprocessor-internal counter. The value of the counter
+                starts at `0` and is incremented by `1` each time the `__COUNTER__` macro is expanded. The counter shall
+                have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of the counter
+                exceeds its implementation-defined maximum value the program is ill-formed.
             </ins>
         </li>
     </ul>
@@ -303,11 +458,33 @@ Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp
     `__COUNTER__`</ins>) remain constant throughout the translation unit.
 </blockquote>
 
+Update the second bullet in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.subst#1">[cpp.subst/1]</a>:
+
+<blockquote>
+    <ul>
+        <li>
+            Otherwise, the replacement preprocessing tokens are the preprocessing tokens of corresponding argument after
+            all macros contained therein have been expanded. <ins>This expansion shall be observed to occur no more than
+            once per argument.</ins> The argument's preprocessing tokens are completely macro replaced before being
+            substituted as if they formed the rest of the preprocessing file with no other preprocessing tokens being
+            available.
+        </li>
+    </ul>
+</blockquote>
+
 <pre class="biblio">
 {
     "P2169": {
         "title": "A nice placeholder with no name",
         "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf"
+    },
+    "N3190": {
+        "title": "Extensions to the preprocessor for C2Y",
+        "href": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3190.htm"
+    },
+    "N3227": {
+        "title": "Draft Minutes for 22–26 January, 2024",
+        "href": "https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm"
     }
 }
 </pre>
