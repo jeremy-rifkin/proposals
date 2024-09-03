@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 6270e4735, updated Tue Aug 6 12:12:30 2024 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_4.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="bf503b7e347c7690c6dd0b572b31009e354a386d" name="revision">
+  <meta content="935c4f943de20907e53a58efecf4436773c6472d" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2480,9 +2480,9 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
    <p>Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/lex.icon">[lex.icon]</a>:</p>
    <blockquote>
 <pre class="highlight"><ins>
-<c- n>digit</c-><c- o>-</c-><c- n>sequence</c-><c- o>:</c->
+<c- n>decimal</c-><c- o>-</c-><c- n>digit</c-><c- o>-</c-><c- n>sequence</c-><c- o>:</c->
     <c- n>digit</c->
-    <c- n>digit</c-><c- o>-</c-><c- n>sequence</c-> <c- n>digit</c->
+    <c- n>decimal</c-><c- o>-</c-><c- n>digit</c-><c- o>-</c-><c- n>sequence</c-> <c- n>digit</c->
 </ins>
 </pre>
    </blockquote>
@@ -2490,10 +2490,10 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
    <blockquote>
     <ul>
      <li>
-      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> A <em>digit-sequence</em> representing the value of a preprocessor-internal counter. The value of the counter
-                starts at <code class="highlight"><c- mi>0</c-></code> and is incremented by <code class="highlight"><c- mi>1</c-></code> each time the <code class="highlight"><c- n>__COUNTER__</c-></code> macro is expanded. The counter shall
-                have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>. If the value of the counter
-                exceeds its implementation-defined maximum value the program is ill-formed. </ins>
+      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> A <em>decimal-digit-sequence</em> representing the value of a preprocessor-internal counter. The value of the
+                counter starts at <code class="highlight"><c- mi>0</c-></code> and is incremented by <code class="highlight"><c- mi>1</c-></code> each time the <code class="highlight"><c- n>__COUNTER__</c-></code> macro is expanded. The
+                counter shall have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>. If the value of
+                the counter exceeds its implementation-defined maximum value the program is ill-formed. </ins>
     </ul>
    </blockquote>
    <p>Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:</p>
