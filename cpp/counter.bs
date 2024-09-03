@@ -428,9 +428,9 @@ Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/lex.icon">[lex.ic
 <blockquote>
     <pre>
         <ins>
-        digit-sequence:
+        decimal-digit-sequence:
             digit
-            digit-sequence digit
+            decimal-digit-sequence digit
         </ins>
     </pre>
 </blockquote>
@@ -442,10 +442,10 @@ Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.
         <li>
             <ins>
                 `__COUNTER__`<br/>
-                A *digit-sequence* representing the value of a preprocessor-internal counter. The value of the counter
-                starts at `0` and is incremented by `1` each time the `__COUNTER__` macro is expanded. The counter shall
-                have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of the counter
-                exceeds its implementation-defined maximum value the program is ill-formed.
+                A *decimal-digit-sequence* representing the value of a preprocessor-internal counter. The value of the
+                counter starts at `0` and is incremented by `1` each time the `__COUNTER__` macro is expanded. The
+                counter shall have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of
+                the counter exceeds its implementation-defined maximum value the program is ill-formed.
             </ins>
         </li>
     </ul>
