@@ -2,10 +2,10 @@
 Title: __COUNTER__
 H1: <code>__COUNTER__</code>
 Group: WG21
-Shortname: Pnnnn
+Shortname: P3384
 Revision: 0
-Status: NP
-Date: 2024-09-02
+Status: P
+Date: 2024-09-03
 Editor: Jeremy Rifkin
 Abstract: `__COUNTER__` is a predefined macro provided as a language extension by all major C and C++ implementations.
           This paper aims to standardize existing practices.
@@ -16,14 +16,14 @@ ED: https://jeremy-rifkin.github.io/proposals/drafts/counter_draft_4.html
 
 # Introduction
 
-The `__COUNTER__` pre-defined macro is a common language extension for C and C++ which expands to an integer literal
-that starts at `0` and increments by `1` every time it expanded in a translation unit. This is useful for generating
+The `__COUNTER__` predefined macro is a common language extension for C and C++ which expands to an integer literal
+that starts at `0` and increments by `1` every time it is expanded in a translation unit. This is useful for generating
 unique identifiers, generating unique indices, and other preprocessor metaprogramming uses.
 
 # Previous Proposals
 
-`__COUNTER__` has not been proposed to WG21, however, it was briefly mentioned previously in *Extensions to the
-preprocessor for C2Y* [[N3190]]. The meeting minutes, [[N3227]], mention brief discussion of `__COUNTER__`'s
+`__COUNTER__` has not been proposed to WG21, however, it was briefly mentioned previously in a WG14 paper, *Extensions
+to the preprocessor for C2Y* [[N3190]]. The meeting minutes, [[N3227]], mention brief discussion of `__COUNTER__`'s
 implications on evaluation order and caching. No polls were taken on [[N3190]].
 
 This paper provides a focused proposal on `__COUNTER__` and aims to provide additional context and motivation.
@@ -47,18 +47,18 @@ Codebases striving for maximum portability must resort to detection and fallback
 #endif
 ```
 
-Meanwhile other C++ codebases avoid it altogether due to this uncertainty. In the absence of cautious checking and
-fallback, a developer must consult numerous widely used C++ implementations to convince themselves that `__COUNTER__`
-exists and does what they want.
-
-Additionally, while every major C++ compiler today supports `__COUNTER__`, it's not always enabled. For example, EDG
-only provides it outside of standards mode.
-
-Minor divergences in `__COUNTER__` semantics are observable, see [[#argument-handling]], though these do not impact
-most use cases.
+Meanwhile other C++ codebases avoid the macro altogether due to this uncertainty. In the absence of cautious checking
+and fallback, a developer must consult numerous widely used C++ implementations to convince themselves that
+`__COUNTER__` exists and does what they want.
 
 In the case of google benchmark, `__LINE__` is an adequate fallback due to how `BENCHMARK` macros are typically used.
 However, this is not an adaquate general-purpose replacement due to it not being unique in the general case.
+
+While every major C++ compiler today supports `__COUNTER__`, it's not always enabled. For example, EDG only provides it
+outside of standards mode.
+
+Additionally, minor divergences in `__COUNTER__` semantics are observable (see [[#argument-handling]]), though they do
+not impact most use cases.
 
 Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of
 `__COUNTER__` into the official standard in order to provide more clear portability and semantic guarantees.
@@ -89,7 +89,8 @@ A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 - Drgn, a programmable debugger, uses `__COUNTER__` for unique identifiers througout the codebase; [link](https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222)
 - Metric Panda Games uses `__COUNTER__` for [lookup tables](https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/) as part of a localization and compile-time string hashing system.
 
-Many additional uses include use for static assertions, however, that use case is now covered by C23.
+Many additional uses include use for static assertions, however, that use case is now covered by built-in static
+assertion facilities.
 
 # Implementation Support
 
@@ -230,7 +231,7 @@ Comparison: [https://godbolt.org/z/Mx4MznMaY](https://godbolt.org/z/Mx4MznMaY)
 MSVC and GCC save the state of `__COUNTER__` in precompiled headers. GCC notes that the `__COUNTER__` macro must not be
 expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.
 
-This paper proposes no change to the current behavior.
+This paper proposes no requirements for `__COUNTER__` behavior surrounding pre-compiled headers.
 
 ## Modules
 
@@ -282,7 +283,8 @@ Current implementations do not make any special attempt to diagnose or prevent s
 ODR diagnostics. Similar ODR issues can occur as a result of `__DATE__` and `__TIME__`. While existing practice is that
 these ODR issues exist, it is worthwhile looking at possible solutions to the problem.
 
-The C semantics for `inline` have similar concerns however it can only result in unspecified behavior.
+N.b.: Similar considerations exist for C, however, different `inline` function definitions can only result in
+unspecified behavior.
 
 ### Possible Solutions
 
@@ -311,7 +313,7 @@ a later time.
 #### Is `__COUNTER__` still needed?
 
 `_` is largely sufficient for uses of `__COUNTER__` in the case of local identifiers, however, it does not cover
-use-cases of `__COUNTER__` in namespace-scoped identifiers.
+use-cases of `__COUNTER__` in namespace-scoped identifiers or other preprocessor metaprogramming uses.
 
 As an example of use of `__COUNTER__` beyond local identifiers google benchmark uses uniquely-named identifiers at
 namespace-scope to register benchmark functions:
@@ -327,10 +329,10 @@ static ::benchmark::internal::Benchmark* _benchmark_2FooBar __attribute__((unuse
 ```
 
 An alternative to `__COUNTER__` in cases such as this would be to standardize `__attribute__((constructor))`. Google
-benchmark does not rely on `_benchmark_2FooBar` to manage any objects, it is a pure constructor, however, in cases where
-an object is managed and possibly needs to be destructed at the end of a program the approach of a namespace-scoped
-variable has the benefit of consolidating constructor and destructor logic around an object, as opposed to managing an
-object between free functions and a variable, e.g.:
+benchmark does not rely on `_benchmark_2FooBar` to manage any objects, it is a pure constructor. However, in cases where
+an object is managed and possibly needs to be destructed at the end of a program, using a namespace-scoped variable
+consolidates the constructor and destructor logic around an object, rather than managing the object between free
+functions and a variable. I.e.:
 
 ```cpp
 std::optional<Foo> obj;
@@ -346,33 +348,34 @@ Foo obj = setup_foo();
 ```
 
 While `_` covers many uses of `__COUNTER__`, the preprocessor utility continues to be useful due to existing practice,
-uses outside local identifiers, other preprocessor metaprogramming uses of `__COUNTER__` beyond unique identifiers, and
-due to use in C.
+uses outside local identifiers, other preprocessor metaprogramming uses of `__COUNTER__` beyond unique identifiers.
+Additionally, because of interest in avoiding divergence in the shared preprocessor, its use in C in an important
+consideration.
 
 ## Evaluation Order and Caching
 
-Meeting notes for [[N3190]] mention brief discussion of `__COUNTER__` making evaluation order and caching observable and
-leading to divergence between compiler test cases [[N3227]].
+Meeting notes for [[N3190]] mention brief discussion of `__COUNTER__` making evaluation order and caching observable,
+possibly leading to divergence between compiler test cases [[N3227]].
 
 The evaluation order consideration is similar to existing expression evaluation order observability. Experience from
-existing practice has shown this doesn't pose a substantial concern or footgun, especially given the typical use for
-`__COUNTER__` which is unique identifiers/indices. When it comes to caching, a conforming implementation would need to
-take care to not cache macro expansions involving `__COUNTER__`.
+existing practice has shown this doesn't pose a substantial concern or footgun. This is especially true given the
+typical use for `__COUNTER__`, which is unique identifiers/indices. When it comes to caching, a conforming
+implementation would need to take care to not cache macro expansions involving `__COUNTER__`.
 
 This paper proposes no change to the current behavior.
 
 ## Argument Handling
 
-If passes as an argument to a function-like macro, multiple expansions of an argument including `__COUNTER__` should
-expand to the same token sequence. This paper proposes the following case should produce `0 0`, which is the current
-behavior on all compilers tested on Compiler Explorer except Chibicc which produces `0 1`.
+If passed as an argument to a function-like macro, multiple expansions of an argument including `__COUNTER__` should
+expand to the same token sequence. This paper proposes the following case should produce `0 0`. This is the current
+behavior on all compilers tested on Compiler Explorer except Chibicc, which produces `0 1`.
 
 ```c
 #define X(Z) Z Z
 X(__COUNTER__) // 0 0
 ```
 
-In the case of an unused argument, `__COUNTER__` will not be expanded and not result in an increment. This is the
+In the case of an unused argument, `__COUNTER__` will not be expanded and will not result in an increment. This is the
 current behavior for all compilers tested on Compiler Explorer.
 
 ```c
@@ -382,7 +385,7 @@ __COUNTER__ // 0
 ```
 
 Additionally in the case of `__VA_OPT__` but no use of `__VA_ARGS__`, an expansion of `__COUNTER__` and subsequent
-increment should occur. Currently Clang diverges from MSVC and GCC, producing `0` in the following example while the
+increment should occur. Currently, Clang diverges from MSVC and GCC in the following example. It produces `0` while the
 others produce `1`:
 
 ```c
