@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/arguments-draft-1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="3b9be799a9167c5e40e763b3cf766e5e3bc3d8be" name="document-revision">
+  <meta content="e74e28ceabfda24902744a37dd63441d3c6ee52b" name="document-revision">
 <style>
 table, th, td {
     border: none;
@@ -2479,8 +2479,8 @@ system-dependent format.</p>
 
     <c- c1>// [arguments.argument.cons], constructors</c->
     <c- n>argument</c-><c- p>(</c-><c- d>/* implementation-defined */</c-><c- p>);</c->
-    <c- k>constexpr</c-> <c- n>argument</c-><c- p>(</c-><c- k>const</c-> <c- n>argument</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-> <c- o>=</c-> <c- k>default</c-><c- p>;</c->
-    <c- k>constexpr</c-> <c- n>argument</c-><c- o>&amp;</c-> <c- k>operator</c-><c- o>=</c-><c- p>(</c-><c- k>const</c-> <c- n>argument</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-> <c- o>=</c-> <c- k>default</c-><c- p>;</c->
+    <c- n>argument</c-><c- p>(</c-><c- k>const</c-> <c- n>argument</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-> <c- o>=</c-> <c- k>default</c-><c- p>;</c->
+    <c- n>argument</c-><c- o>&amp;</c-> <c- k>operator</c-><c- o>=</c-><c- p>(</c-><c- k>const</c-> <c- n>argument</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-> <c- o>=</c-> <c- k>default</c-><c- p>;</c->
 
     <c- c1>// [arguments.argument.native], native observers</c->
     <c- k>const</c-> <c- n>string_view_type</c-> <c- nf>native</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c->
