@@ -55,25 +55,26 @@ accessing arguments outside of main, and a modern interface for accessing argume
 **Encoding:** The only standard way to access command-line arguments in C++ is via `int main(int argc, char** argv)`.
 This is a staple of C and C++, however, it's not well-suited for portable applications. The encoding of `argv` varies
 system to system <a data-link-type=biblio data-biblio-type=informative data-lt="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
-On Windows, the native encoding is UTF-16 and `char** argv` in `main` is deprecated. In order to facilitate `argv`,
-UTF-16 arguments must be converted using legacy windows code pages. The only correct ways to handle command line
-arguments on Windows are platform-specific functions, `WinMain`, or `wmain`. Even on Unix-based systems, the encoding of
-`char** argv` is not always clear. Tackling this problem more or less necessitates an interface for accessing command
-line arguments independent of `main` as adding a new signature to `main` has been rejected by the committee.
+On Windows, the native encoding is UTF-16 and it's recommended to use `wmain` instead of `main` for portable code. In
+order to facilitate `argv`, UTF-16 arguments must be converted using legacy windows code pages. The only correct ways to
+handle command line arguments on Windows are platform-specific functions, `WinMain`, or `wmain`. Even on Unix-based
+systems, the encoding of `char** argv` is not always clear. Tackling this problem more or less necessitates an interface
+for accessing command line arguments independent of `main` as adding a new signature to `main` has been rejected by the
+committee.
 
 **Access outside main:** It's often desirable to be able to access command line arguments outside of `main` and even do
 so before `main`. Some examples could include including diagnostic information in a crash handler, some designs for a
-command line argument parser, and cases where `main` is out of your control such. A common case is
+command line argument parser, and cases where `main` is out of your control. A common case of this is
 [testing frameworks](https://github.com/google/googletest/issues/765). Currently command line arguments are only
 available inside of `main`, requiring a programmer to manually pass arguments throughout the program or create their own
 global storage for arguments. This can add clutter and introduce unecessary complexity, especially if argument handling
 doesn't happen "close" to `main`. There is precedent from other languages for this sort of capability, notably languages
-such as Go, Rust, Swift, Ruby, C#, Haskell, Ada, and many others provide an interface for accessing arguments from
-anywhere in a program. Additionally, many C++ frameworks make arguments available outside `main`, such as QT with
+such as Python, Go, Rust, Swift, Ruby, C#, Haskell, Ada, and many others provide an interface for accessing arguments
+from anywhere in a program. Additionally, many C++ frameworks make arguments available outside `main`, such as QT with
 `QCoreApplication::arguments`.
 
 **Modernity:** Passing arrays via a pointer and length argument is a very antiquated pattern rendered obsolete by modern
-soltuions such as `std::span`. `main` is the one case where, if the programmer wants to utilize command line arguments,
+solutions such as `std::span`. `main` is the one case where, if the programmer wants to utilize command line arguments,
 separate pointer and length arguments are still a requirement. A modern signature for `main` along the lines of
 `int main(std::span<char*> argv)`, `int main(std::span<std::string_view> argv)`, or `int main(std::argument_list argv)`
 was previously rejected by the committee due to concerns surrounding complexity, overhead, and encoding issues
@@ -159,8 +160,8 @@ Polls on [[P1275]] by SG16:
     Attendance: 14
 </blockquote>
 
-Concerns brought up in multiple discussions included mutability of arguments, overhead of initializing data structures
-before `main`, and how to handle different encodings.
+Key concerns discussed included mutability of arguments, overhead of initializing data structures before
+`main`, and how to handle different encodings.
 
 # Design
 
@@ -178,8 +179,8 @@ extra allocation or overhead. Implementations may choose to, for example, cache 
 done lazily.
 
 While it is not uncommon practice to modify the contents of `char** argv`, `std::arguments` is entirely read-only in
-order to not introduce dangers surrounding global mutable state. It is left undefined if the user modifies `argv` from
-main and also uses `std::arguments`.
+order to not introduce dangers surrounding global mutable state. Whether changes made to `argv` are reflected in
+`std::arguments` is left to the implementation.
 
 ## Future Interface Expansion
 
@@ -221,7 +222,8 @@ and `_NSGetArgc` could be used. Implementation on Linux and other Unixes is more
 means at all to access `argc` and `argv` outside of or before `main`. Implementation here would probably require a
 modification to libc to make `argc` and `argv` available similar to where `__environ` is set in `__libc_start_main`.
 [[N2948]] offered a [reference implementation](https://github.com/cor3ntin/glibc/commit/d96b6f523b9526142f621df5ce9a1e71a592fca4)
-for this mechanism in a private glibc fork.
+for this mechanism in a private glibc fork. Alternatively, if a change to libc imposes a substantial burden, an
+implementation could save argc and argv in the program entry point.
 
 # Proposed Wording
 
@@ -279,9 +281,16 @@ namespace std {
   class arguments_view;
   class argument;
 
-  extern arguments_view arguments;
+  // [arguments.access] arguments access
+  const arguments_view& arguments();
 }
 ```
+
+<h3 class="no-num no-toc mono">Arguments access [arguments.access]</h3>
+
+<p><code>const arguments_view& arguments();</code></p>
+<p class="indent">*Returns*: A reference to an `arguments_view` object.</p>
+<p class="indent">*Throws*: May throw `bad_alloc`.</p>
 
 <h3 class="no-num no-toc mono">Class `arguments_view` [arguments.view]</h3>
 
@@ -299,11 +308,9 @@ namespace std {
     using const_reference = value_type;
     using const_iterator = /* implementation-defined */; // see [arguments.view.iterators]
     using iterator = const_iterator;
-    using const_reverse_iterator = std::const_iterator<const_iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using reverse_iterator = const_reverse_iterator;
 
-    // [arguments.view.cons], constructors
-    arguments_view(/* implementation-defined */);
     arguments_view(const arguments_view&) = delete;
     arguments_view& operator=(const arguments_view&) = delete;
 
@@ -331,20 +338,15 @@ namespace std {
 }
 ```
 
-<h4 class="no-num no-toc mono">Constructors [arguments.view.cons]</h4>
-
-<p><code>arguments_view(/* implementation-defined */);</code></p>
-<p class="indent">`arguments_view` may have implementation-defined constructors for implementation use.</p>
-
 <h4 class="no-num no-toc mono">Access [arguments.view.access]</h4>
 
 <p><code>value_type operator[](size_type index) const noexcept;</code></p>
-<p class="indent">*Preconditions*: `i < size()` is `true`.</p>
-<p class="indent">*Returns*: The program argument at index `i`.</p>
+<p class="indent">*Preconditions*: `index < size()` is `true`.</p>
+<p class="indent">*Returns*: The argument at index `index` passed into the program from the environment. It is implementation-defined whether, in a `main` function with signature `main(int argc, char** argv)`, any modifications to `argv` are reflected by `arguments_view::operator[]`.</p>
 <p class="indent">*Throws*: Nothing.</p>
 
 <p><code>value_type at(size_type index) const;</code></p>
-<p class="indent">*Returns*: The program argument at index `i`.</p>
+<p class="indent">*Effects*: Equivalent to: `return operator[](index);` if `index >= size()` is `true`.</p>
 <p class="indent">*Throws*: `out_of_range` if `index >= size()` is `true`.</p>
 
 <h4 class="no-num no-toc mono">Observers [arguments.view.obs]</h4>
@@ -359,9 +361,8 @@ namespace std {
 
 <p><code>using const_iterator = /* implementation-defined */;</code></p>
 <p class="indent">
-  The type models `contiguous_iterator` ([iterator.concept.contiguous]), meets the requirements of a constant
-  *Cpp17RandomAccessIterator* requirements ([random.access.iterators]), and its value type is `value_type` and its
-  reference type is `reference`.
+  The type models a constant `random_access_iterator` ([iterator.concept.random.access]). Its value type is `value_type`
+  and its reference type is `reference`.
 </p>
 <p class="indent">
   All requirements on container iterators ([container.reqmts]) apply to `arguments_view::iterator` as well.
@@ -404,6 +405,7 @@ namespace std {
 
 <p>An object of class `argument` is a view of a character string argument passed to the program in an operating
 system-dependent format.</p>
+<p>It is implementation-defined whether, in a `main` function with signature `main(int argc, char** argv)`, any modifications to `argv` are reflected by an `argument`.</p>
 
 ```cpp
 namespace std {
@@ -413,8 +415,6 @@ namespace std {
     using string_type = basic_string<value_type>;
     using string_view_type = basic_string_view<value_type>;
 
-    // [arguments.argument.cons], constructors
-    argument(/* implementation-defined */);
     argument(const argument&) noexcept = default;
     argument& operator=(const argument&) noexcept = default;
 
@@ -422,8 +422,8 @@ namespace std {
     const string_view_type native() const noexcept;
     const string_type      native_string() const;
     const value_type*      c_str() const noexcept;
-    operator string_type() const;
-    operator string_view_type() const noexcept;
+    explicit operator string_type() const;
+    explicit operator string_view_type() const noexcept;
 
     // [arguments.argument.obs], converting observers
     template<class EcharT, class traits = char_traits<EcharT>,
@@ -493,11 +493,6 @@ namespace std {
   If the encoding being converted to has no representation for source characters, the resulting converted characters, if
   any, are unspecified.
 </p>
-
-<h4 class="no-num no-toc mono">Constructors [arguments.argument.cons]</h4>
-
-<p><code>argument(/* implementation-defined */);</code></p>
-<p class="indent">`arguments_view` may have implementation-defined constructors for implementation use.</p>
 
 <h4 class="no-num no-toc mono">Native Observers [arguments.argument.native]</h4>
 
