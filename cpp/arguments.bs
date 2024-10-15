@@ -2,7 +2,7 @@
 Title: std::arguments
 H1: <code>std::arguments</code>
 Group: WG21
-Audience: EWGI, LEWG
+Audience: EWGI, LEWGI
 Shortname: Pnnnn
 Revision: 0
 Status: D
@@ -10,7 +10,7 @@ Date: 2024-09-20
 Editor: Jeremy Rifkin
 Abstract: This paper proposes an encoding-friendly and modern interface for accessing command line arguments throughout a program.
 Markup Shorthands: markdown on
-ED: https://jeremy-rifkin.github.io/proposals/drafts/cpp/arguments-draft-1.html
+ED: https://jeremy-rifkin.github.io/proposals/drafts/cpp/arguments-draft-2.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/arguments.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/arguments.bs)
 </pre>
 
@@ -49,12 +49,12 @@ design elements, and good ideas from both.
 # Introduction
 
 This paper aims to solve three problems: Encoding and portability problems with command line arguments, an interface for
-accessing arguments outside of main, and a modern interface for accessing arguments. It does so by introducing a global
-`std::arguments` object with a modern and encoding-friendly interface.
+accessing arguments outside of main, and a modern interface for accessing arguments. It does so by introducing a
+`std::arguments` class that provides a modern and encoding-friendly interface for arguments.
 
-**Encoding:** The only standard way to access command-line arguments in C++ is via `int main(int argc, char** argv)`.
-This is a staple of C and C++, however, it's not well-suited for portable applications. The encoding of `argv` varies
-system to system <a data-link-type=biblio data-biblio-type=informative data-lt="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
+**Encoding:** The only standard means for accessing access command-line arguments in C++ is via `int main(int argc,
+char** argv)`. This is a staple of C and C++, however, it's not well-suited for portable applications. The encoding of
+`argv` varies system to system <a data-link-type=biblio data-biblio-type=informative data-lt="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
 On Windows, the native encoding is UTF-16 and it's recommended to use `wmain` instead of `main` for portable code. In
 order to facilitate `argv`, UTF-16 arguments must be converted using legacy windows code pages. The only correct ways to
 handle command line arguments on Windows are platform-specific functions, `WinMain`, or `wmain`. Even on Unix-based
@@ -62,27 +62,25 @@ systems, the encoding of `char** argv` is not always clear. Tackling this proble
 for accessing command line arguments independent of `main` as adding a new signature to `main` has been rejected by the
 committee.
 
-**Access outside main:** It's often desirable to be able to access command line arguments outside of `main` and even do
-so before `main`. Some examples could include including diagnostic information in a crash handler, some designs for a
-command line argument parser, and cases where `main` is out of your control. A common case of this is
-[testing frameworks](https://github.com/google/googletest/issues/765). Currently command line arguments are only
-available inside of `main`, requiring a programmer to manually pass arguments throughout the program or create their own
-global storage for arguments. This can add clutter and introduce unecessary complexity, especially if argument handling
-doesn't happen "close" to `main`. There is precedent from other languages for this sort of capability, notably languages
-such as Python, Go, Rust, Swift, Ruby, C#, Haskell, Ada, and many others provide an interface for accessing arguments
-from anywhere in a program. Additionally, many C++ frameworks make arguments available outside `main`, such as QT with
-`QCoreApplication::arguments`.
+**Access outside main:** It may be desirable to be able to access command line arguments outside of `main` and even to
+do so before `main`. Some examples could include logging diagnostic information in a crash handler and some designs for
+a command line argument parser. Currently, command line arguments are only available inside of `main` which requires a
+programmer to manually pass arguments throughout the program or create their own global storage for arguments. This can
+add clutter and introduce unnecessary complexity, especially if argument handling doesn't happen "close" to `main`.
+There is precedent from other languages for global access, notably languages such as Python, Go, Rust, Swift, Ruby, C#,
+Haskell, Ada, and many others provide an interface for accessing arguments from anywhere in a program. Additionally,
+many C++ frameworks make arguments available outside `main`, such as QT with `QCoreApplication::arguments`.
 
 **Modernity:** Passing arrays via a pointer and length argument is a very antiquated pattern rendered obsolete by modern
-solutions such as `std::span`. `main` is the one case where, if the programmer wants to utilize command line arguments,
-separate pointer and length arguments are still a requirement. A modern signature for `main` along the lines of
+solutions such as `std::span`. `main` is the one case where separate pointer and length arguments are still a
+requirement if command line arguments are desired. A modern signature for `main` along the lines of
 `int main(std::span<char*> argv)`, `int main(std::span<std::string_view> argv)`, or `int main(std::argument_list argv)`
 was previously rejected by the committee due to concerns surrounding complexity, overhead, and encoding issues
 [[P0781]]. On top of new functionality and increased portability, a facility such as `std::arguments` provides a modern
-C++ solution for accessing arguments. An important benefit to this interface is teachability: Currently `main`, if
-command line arguments are desired, requires introduction to pointers relatively early on in education as well as
-subjection to footguns and confusion about the difference between C strings and C++ strings. This adds steepness to an
-already hazardously steep learning curve.
+C++ solution for accessing arguments. An important benefit to this interface is teachability: Currently command line
+arguments require introduction to pointers relatively early on in education as well as subjection to footguns and
+confusion about the difference between C strings and C++ strings. This adds steepness to an already hazardously steep
+learning curve.
 
 # Previous Straw Polls and Discussion
 
@@ -163,24 +161,99 @@ Polls on [[P1275]] by SG16:
 Key concerns discussed included mutability of arguments, overhead of initializing data structures before
 `main`, and how to handle different encodings.
 
-# Design
+# Implementability
 
-This paper introduces a global `std::arguments` object of type `std::arguments_view` and a header `<arguments>`.
+On Windows, command line arguments can be accessed by `GetCommandLineW`. This function returns the command line as a
+string which must then be tokenized. This is called by the Windows CRT during startup to populate `argv` for main. The
+Windows CRT also provide `__argv` and `__wargv` global variables but only populates one depending on `__UNICODE__`.
+Additionally, neither may be populated if the command line parsing is disabled via options tailored to applications
+trying to minimize startup time.
 
-`std::arguments_view` in many ways mirrors the interface of a constant `std::span`. More specifically, excluding the
-subview interface, modifiers, `size_bytes`, and `data`. This class is not copyable or movable and is intended to only be
-constructed by the implementation.
+On MacOS, `_NSGetArgv` and `_NSGetArgc` can be used to access `argc` and `argv` outside of `main`. These are both
+trivial functions that don't allocate.
 
-`std::arguments_view` has a `value_type` of `std::argument`, which follows the precedent of `std::filesystem::path` in
-providing observers that can convert between encodings. SG16 indicated a desire to follow the path precedent and there
-are a lot of similarities between the two cases: Both can be encoded arbitrarily or even have no encoding - paths could
-be any sequence of bytes and command line arguments can be too. `std::argument` is, itself, just a view and requires no
-extra allocation or overhead. Implementations may choose to, for example, cache the result of `strlen` but this can be
-done lazily.
+Implementation on other Unix-based systems is more challenging. There are four options:
+1. Modify libc to store `argv` and `argc` globally, e.g. `__argc` and `__argv`, similar to `__environ`.
+    ([reference implementation for this from N2948](https://github.com/cor3ntin/glibc/commit/d96b6f523b9526142f621df5ce9a1e71a592fca4)).
+2. Alternatively, store `argc` and `argv` from the program's entry point. This would only require compiler support
+    instead of a libc change.
+3. Use `__dl_argv` which exists in glibc. Unfortunately, absent a glibc change, looping through `__dl_argv` would be
+    needed to determine `argc` as `__dl_argc` is hidden.
+4. Read from and tokenize `/proc/self/cmdline`.
+5. Glibc passes `argc` and `argv` to entries in the `.init_array`.
+
+# Proposed Design
+
+This paper introduces two classes, `std::arguments` and `std::argument`, and a header, `<arguments>`.
+
+`std::arguments` has the interface of a constant `std::span` excluding the subview interface, modifiers, constructors,
+`size_bytes`, and `data`. Its default constructor initializes the object to represent the program's command-line
+arguments and may perform allocation.
+
+`std::arguments` has a `value_type` of `std::argument` which mirrors the design of `std::filesystem::path` by providing
+observers that can convert to desired encodings. SG16 indicated a desire to follow the precedent of
+`std::filesystem::path`. Both paths and arguments can be encoded arbitrarily or even have no encoding; paths could be
+any sequence of bytes and command line arguments can be too. `std::argument` may be a view of a string or may own an
+allocation.
 
 While it is not uncommon practice to modify the contents of `char** argv`, `std::arguments` is entirely read-only in
-order to not introduce dangers surrounding global mutable state. Whether changes made to `argv` are reflected in
-`std::arguments` is left to the implementation.
+order to not introduce dangers surrounding global mutable state. Whether changes made to `argv` in `main` are reflected
+in `std::arguments` is implementation-defined.
+
+## Design Considerations
+
+The main design considerations come down to allocation, when tokenization or other argument preprocessing happens, and
+whether modifications to `argv` in `main` are reflected in `std::arguments`.
+
+<b>Reflecting `argv` modifications from `main`:</b> It is desirable for `std::arguments` to contain the same values
+throughout the lifetime of a program and to not reflect changes to `argv` in `main`. Unfortunately, this would require
+allocation and copying on some systems. On Unix-based systems all means to access `argv` will
+reflect changes to `argv` in `main`, including `/proc/self/cmdline`. Discussion on [[P1275]] and [[P0781]] made clear
+that any overhead before `main` in the case of programs that don't use `std::arguments` is unacceptable. Unfortunately,
+an initializer similar to `std::ios_base::Init` isn't an option due to shared libraries not necessarily being loaded
+before `main`. Additionally, with `import std;` this would translate to overhead before `main` that is not pay for what
+you use. Due to implementations challenges, this paper leaves behavior implementation-defined in the case of `argv`
+being modified in `main`.
+
+<b>Saving `strlen`:</b> On Unix-based systems, producing string views for arguments will involve a `strlen`. It
+may be desirable to save the result of this computation, however, the issue of modification mostly rules this out.
+While the storage for the arguments from the system will always be there, the pointers in `argv` could be modified and
+detecting this would be sufficiently complicated, involve overhead, or in general may be impossible. Because of this,
+every access of an argument string view will require a `strlen` unless the implementation makes copies of `argv` string
+entries. It would likely be undesirable to make it undefined behavior to use `std::arguments` after modifications in
+`main` so this paper leaves the possibility of a strlen cost open.
+
+<b>Preprocessing:</b> On Windows `GetCommandLineW` will return a string which needs to be split into individual
+arguments. It may be desirable in some use-cases to only split this string lazily with an input-iterator interface for
+arguments. This paper does not suggest any design constrained to input-iteration, though, as much use will want more
+general access and iteration abilities and will require having tokenized all arguments anyway - whether by looping
+through all the arguments or even just looking at the argument count.
+
+<b>Backing storage for `std::argument`s:</b> On Unix-based systems it would be easy for `std::arguments` to not involve
+any allocation and simply provide iterators over `argv` that dereference to fictitious `std::argument` objects.
+Unfortunately, this would prevent the iterator from satisfying the Cpp17RandomAccessIterator requirements, container
+requirements, and may be error prone in the case of trying to store a reference to a `std::argument`. The proposed
+requirements here will require backing storage.
+
+<b>Global singleton, a function returning a reference, or construction:</b> `std::arguments` could be implemented as a
+global singleton similar to `std::cout`, a `std::arguments` function returning a reference to a singleton, or as an
+object that the user constructs. While an object the user constructs potentially results in allocation at multiple
+points in a program, as well as possibly seeing different values if `argv` is modified in `main`, it's also desirable to
+allow the `std::arguments` allocation to be cleaned up. As such, this paper proposes a `std::arguments` class which may
+perform allocation and various preprocessing at construction.
+
+<b>Globs and `argv[0]`:</b> On Unix-based systems glob expansion is done by the shell. On Windows it is neither done by
+the shell or the Windows CRT. This paper proposes `std::arguments` should correspond directly to `argv` in `main`
+without any additional glob expansion. This paper also does not propose any special handling for the first entry of
+`argv`.
+
+<b>Comparison with other performance-oriented languages:</b> Rust's `std::env::args()` function creates an `Args` object
+which involves creating a vector of strings in the OS native encoding, copying from `argv` on Unix-based systems and
+tokenizing on Windows. Rust accesses `argv` and `argc` on most Unix-based systems by placing an initializer in the
+`.init_array`. Rust doesn't have to worry about modification of `argv` in `main`.
+
+Because the design of this library feature has a lot of tradeoffs it is the goal of this paper to offer as much
+implementation flexibility as possible.
 
 ## Future Interface Expansion
 
@@ -215,15 +288,32 @@ A UDL could also be considered, however, this is a more general problem that, in
 addressed directly rather than through a bespoke solution. The problem of operations between strings of different
 encodings would best be tackled in another paper.
 
-# Implementability
+## Bikeshedding
 
-On Windows, `std::arguments` could be implemented with `GetCommandLineW` or `__wargv` and `__argc`. On mac, `_NSGetArgv`
-and `_NSGetArgc` could be used. Implementation on Linux and other Unixes is more challenging as there is currently no
-means at all to access `argc` and `argv` outside of or before `main`. Implementation here would probably require a
-modification to libc to make `argc` and `argv` available similar to where `__environ` is set in `__libc_start_main`.
-[[N2948]] offered a [reference implementation](https://github.com/cor3ntin/glibc/commit/d96b6f523b9526142f621df5ce9a1e71a592fca4)
-for this mechanism in a private glibc fork. Alternatively, if a change to libc imposes a substantial burden, an
-implementation could save argc and argv in the program entry point.
+This paper uses the `std::arguments` naming from [[P1275]], however, the name is subject to bikeshedding. One point
+brought up on the mailing list was that `arguments` is a very generic name and it might be desirable to reserve it for
+future use. Some names that could be considered instead include:
+- `std::program_arguments`
+- `std::command_line`
+- `std::command_line::arguments`
+- `std::program_options`
+- `std::argv`
+- `std::process:arguments`
+
+Naming in other notable languages:
+- Python: `sys.argv`
+- Go: `os.Args()`
+- Rust `std::env::args()`
+- Swift: `CommandLine.arguments`
+- Ruby: `ARGV`
+- C#: `Environment.GetCommandLineArgs()`
+- Haskell: `getArgs()`
+- Ada: `Ada.Command_Line.Argument`
+
+In a very informal approval-voting-style poll on the Together C & C++ Discord server (participants were asked to vote
+for all they found appealing) members showed a strong preference for either `std::arguments` or `std::argv` with eight
+and 17 votes respectively. Other options had no more than two votes. The last option, `std::process::arguments`, came up
+after the poll was started and thus wasn't captured in the poll.
 
 # Proposed Wording
 
@@ -278,41 +368,34 @@ Insert a new section [arguments]:
 
 ```cpp
 namespace std {
-  class arguments_view;
+  class arguments;
   class argument;
-
-  // [arguments.access] arguments access
-  const arguments_view& arguments();
 }
 ```
 
-<h3 class="no-num no-toc mono">Arguments access [arguments.access]</h3>
+<h3 class="no-num no-toc mono">Class `arguments` [arguments.view]</h3>
 
-<p><code>const arguments_view& arguments();</code></p>
-<p class="indent">*Returns*: A reference to an `arguments_view` object.</p>
-<p class="indent">*Throws*: May throw `bad_alloc`.</p>
-
-<h3 class="no-num no-toc mono">Class `arguments_view` [arguments.view]</h3>
-
-<p>An `arguments_view` provides a random access interface for accessing arguments passed to the program.</p>
-<p>All member functions of `arguments_view` have constant time complexity.</p>
+<p>Class `arguments` is a read-only container holding a continuous range of `argument` objects corresponding to arguments passed to the program.</p>
+<p>All member functions of `arguments` have constant time complexity except the constructor.</p>
 
 ```cpp
 namespace std {
-  class arguments_view {
+  class arguments {
   public:
-    using value_type = argument;
+    using value_type = const argument;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using reference = value_type;
-    using const_reference = value_type;
+    using pointer = value_type*;
+    using const_pointer = value_type*;
+    using reference = value_type&;
+    using const_reference = value_type&;
     using const_iterator = /* implementation-defined */; // see [arguments.view.iterators]
     using iterator = const_iterator;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using reverse_iterator = const_reverse_iterator;
 
-    arguments_view(const arguments_view&) = delete;
-    arguments_view& operator=(const arguments_view&) = delete;
+    // [arguments.view.cons], constructor
+    arguments();
 
     // [arguments.view.access], access
     reference operator[](size_type index) const noexcept;
@@ -342,7 +425,7 @@ namespace std {
 
 <p><code>value_type operator[](size_type index) const noexcept;</code></p>
 <p class="indent">*Preconditions*: `index < size()` is `true`.</p>
-<p class="indent">*Returns*: The argument at index `index` passed into the program from the environment. It is implementation-defined whether, in a `main` function with signature `main(int argc, char** argv)`, any modifications to `argv` are reflected by `arguments_view::operator[]`.</p>
+<p class="indent">*Returns*: The argument at index `index` passed into the program from the environment. It is implementation-defined whether, in a `main` function with signature `main(int argc, char** argv)`, any modifications to `argv` are reflected by `arguments::operator[]`.</p>
 <p class="indent">*Throws*: Nothing.</p>
 
 <p><code>value_type at(size_type index) const;</code></p>
@@ -361,11 +444,11 @@ namespace std {
 
 <p><code>using const_iterator = /* implementation-defined */;</code></p>
 <p class="indent">
-  The type models a constant `random_access_iterator` ([iterator.concept.random.access]). Its value type is `value_type`
-  and its reference type is `reference`.
+  The type models a `contiguous_iterator` ([iterator.concept.contiguous]) and meets the *Cpp17RandomAccessIterator*
+  requirements ([random.access.iterators]) whose value type is `value_type` and whose reference type is `reference`.
 </p>
 <p class="indent">
-  All requirements on container iterators ([container.reqmts]) apply to `arguments_view::iterator` as well.
+  All requirements on container iterators ([container.reqmts]) apply to `arguments::iterator` as well.
 </p>
 
 <p>
@@ -414,9 +497,6 @@ namespace std {
     using value_type  = /* see below */;
     using string_type = basic_string<value_type>;
     using string_view_type = basic_string_view<value_type>;
-
-    argument(const argument&) noexcept = default;
-    argument& operator=(const argument&) noexcept = default;
 
     // [arguments.argument.native], native observers
     const string_view_type native() const noexcept;
