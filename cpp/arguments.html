@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/arguments-draft-2.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="9645530f0bae6a72571dabac712e52ce42446017" name="document-revision">
+  <meta content="598076cf07325d2880b9698355719de3b244c961" name="document-revision">
 <style>
 table, th, td {
     border: none;
@@ -2189,7 +2189,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <li><a href="#future-interface-expansion"><span class="secno">5.2</span> <span class="content">Future Interface Expansion</span></a>
       <li><a href="#bikeshedding"><span class="secno">5.3</span> <span class="content">Bikeshedding</span></a>
      </ol>
-    <li><a href="#proposed-wording"><span class="secno">6</span> <span class="content">Proposed Wording</span></a>
+    <li><a href="#reference-implementation"><span class="secno">6</span> <span class="content">Reference Implementation</span></a>
+    <li><a href="#proposed-wording"><span class="secno">7</span> <span class="content">Proposed Wording</span></a>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
@@ -2206,21 +2207,21 @@ design elements, and good ideas from both.</p>
    <h2 class="heading settled" data-level="2" id="introduction"><span class="secno">2. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
    <p>This paper aims to solve three problems: Encoding and portability problems with command line arguments, an interface for
 accessing arguments outside of main, and a modern interface for accessing arguments. It does so by introducing a <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> class that provides a modern and encoding-friendly interface for arguments.</p>
-   <p><strong>Encoding:</strong> The only standard means for accessing access command-line arguments in C++ is via <code class="highlight"><c- b>int</c-> <c- n>main</c-><c- p>(</c-><c- b>int</c-> <c- n>argc</c-><c- p>,</c-> <c- b>char</c-><c- o>**</c-> <c- n>argv</c-><c- p>)</c-></code>. This is a staple of C and C++, however, it’s not well-suited for portable applications. The encoding of <code class="highlight"><c- n>argv</c-></code> varies system to system <a data-link-type="biblio" href="#biblio-what-is-the-encoding-of-argv" title="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
+   <p><strong>Encoding:</strong> The only standard means for accessing access command-line arguments in C++ is via <code class="highlight"><c- b>int</c-> <c- n>main</c-><c- p>(</c-><c- b>int</c-> <c- n>argc</c-><c- p>,</c-> <c- b>char</c-><c- o>**</c-> <c- n>argv</c-><c- p>)</c-></code>. This is a staple of C and C++, however, it’s not well-suited for portable applications because the
+encoding of <code class="highlight"><c- n>argv</c-></code> varies system to system <a data-link-type="biblio" href="#biblio-what-is-the-encoding-of-argv" title="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
 On Windows, the native encoding is UTF-16 and it’s recommended to use <code class="highlight"><c- n>wmain</c-></code> instead of <code class="highlight"><c- n>main</c-></code> for portable code. In
-order to facilitate <code class="highlight"><c- n>argv</c-></code>, UTF-16 arguments must be converted using legacy windows code pages. The only correct ways to
+order to facilitate <code class="highlight"><c- n>argv</c-></code>, UTF-16 arguments must be converted using legacy Windows code pages. The preferred ways to
 handle command line arguments on Windows are platform-specific functions, <code class="highlight"><c- n>WinMain</c-></code>, or <code class="highlight"><c- n>wmain</c-></code>. Even on Unix-based
-systems, the encoding of <code class="highlight"><c- b>char</c-><c- o>**</c-> <c- n>argv</c-></code> is not always clear. Tackling this problem more or less necessitates an interface
+systems the encoding of <code class="highlight"><c- b>char</c-><c- o>**</c-> <c- n>argv</c-></code> is not always clear. Tackling this problem more or less necessitates an interface
 for accessing command line arguments independent of <code class="highlight"><c- n>main</c-></code> as adding a new signature to <code class="highlight"><c- n>main</c-></code> has been rejected by the
 committee.</p>
-   <p><strong>Access outside main:</strong> It may be desirable to be able to access command line arguments outside of <code class="highlight"><c- n>main</c-></code> and even to
-do so before <code class="highlight"><c- n>main</c-></code>. Some examples could include logging diagnostic information in a crash handler and some designs for
-a command line argument parser. Currently, command line arguments are only available inside of <code class="highlight"><c- n>main</c-></code> which requires a
-programmer to manually pass arguments throughout the program or create their own global storage for arguments. This can
-add clutter and introduce unnecessary complexity, especially if argument handling doesn’t happen "close" to <code class="highlight"><c- n>main</c-></code>.
-There is precedent from other languages for global access, notably languages such as Python, Go, Rust, Swift, Ruby, C#,
-Haskell, Ada, and many others provide an interface for accessing arguments from anywhere in a program. Additionally,
-many C++ frameworks make arguments available outside <code class="highlight"><c- n>main</c-></code>, such as QT with <code class="highlight"><c- n>QCoreApplication</c-><c- o>::</c-><c- n>arguments</c-></code>.</p>
+   <p><strong>Access outside main:</strong> It may be desirable to access command line arguments outside of <code class="highlight"><c- n>main</c-></code> and even to do so before <code class="highlight"><c- n>main</c-></code>. Some examples could include logging diagnostic information in a crash handler and some designs for a command
+line argument parser. Currently, command line arguments are only available inside of <code class="highlight"><c- n>main</c-></code> which requires a programmer
+to manually pass arguments throughout the program or create their own global storage for arguments. This can add clutter
+and introduce unnecessary complexity, especially if argument handling doesn’t happen "close" to <code class="highlight"><c- n>main</c-></code>. There is
+precedent from other languages for global access, notably languages such as Python, Go, Rust, Swift, Ruby, C#, Haskell,
+Ada, and many others provide an interface for accessing arguments from anywhere in a program. Additionally, many C++
+frameworks make arguments available outside <code class="highlight"><c- n>main</c-></code>, such as QT with <code class="highlight"><c- n>QCoreApplication</c-><c- o>::</c-><c- n>arguments</c-></code>.</p>
    <p><strong>Modernity:</strong> Passing arrays via a pointer and length argument is a very antiquated pattern rendered obsolete by modern
 solutions such as <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>span</c-></code>. <code class="highlight"><c- n>main</c-></code> is the one case where separate pointer and length arguments are still a
 requirement if command line arguments are desired. A modern signature for <code class="highlight"><c- n>main</c-></code> along the lines of <code class="highlight"><c- b>int</c-> <c- n>main</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- b>char</c-><c- o>*></c-> <c- n>argv</c-><c- p>)</c-></code>, <code class="highlight"><c- b>int</c-> <c- n>main</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string_view</c-><c- o>></c-> <c- n>argv</c-><c- p>)</c-></code>, or <code class="highlight"><c- b>int</c-> <c- n>main</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>argument_list</c-> <c- n>argv</c-><c- p>)</c-></code> was previously rejected by the committee due to concerns surrounding complexity, overhead, and encoding issues <a data-link-type="biblio" href="#biblio-p0781" title="A Modern C++ Signature for main">[P0781]</a>. On top of new functionality and increased portability, a facility such as <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> provides a modern
@@ -2392,9 +2393,9 @@ arguments. It may be desirable in some use-cases to only split this string lazil
 arguments. This paper does not suggest any design constrained to input-iteration, though, as much use will want more
 general access and iteration abilities and will require having tokenized all arguments anyway - whether by looping
 through all the arguments or even just looking at the argument count.</p>
-   <p><b>Backing storage for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argument</c-></code>s:</b> On Unix-based systems it would be easy for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> to not involve
-any allocation and simply provide iterators over <code class="highlight"><c- n>argv</c-></code> that dereference to fictitious <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argument</c-></code> objects.
-Unfortunately, this would prevent the iterator from satisfying the Cpp17RandomAccessIterator requirements, container
+   <p><b>Backing storage for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argument</c-></code>s:</b> On Unix-based systems it would be simple for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> to not
+involve any allocation and simply provide iterators over <code class="highlight"><c- n>argv</c-></code> that dereference to ephemeral <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argument</c-></code> objects.
+Unfortunately, this would prevent the iterator from satisfying the <em>Cpp17RandomAccessIterator</em> requirements, container
 requirements, and may be error prone in the case of trying to store a reference to a <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argument</c-></code>. The proposed
 requirements here will require backing storage.</p>
    <p><b>Global singleton, a function returning a reference, or construction:</b> <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> could be implemented as a
@@ -2408,7 +2409,7 @@ the shell or the Windows CRT. This paper proposes <code class="highlight"><c- n>
    <p><b>Comparison with other performance-oriented languages:</b> Rust’s <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>env</c-><c- o>::</c-><c- n>args</c-><c- p>()</c-></code> function creates an <code class="highlight"><c- n>Args</c-></code> object
 which involves creating a vector of strings in the OS native encoding, copying from <code class="highlight"><c- n>argv</c-></code> on Unix-based systems and
 tokenizing on Windows. Rust accesses <code class="highlight"><c- n>argv</c-></code> and <code class="highlight"><c- n>argc</c-></code> on most Unix-based systems by placing an initializer in the <code class="highlight"><c- p>.</c-><c- n>init_array</c-></code>. Rust doesn’t have to worry about modification of <code class="highlight"><c- n>argv</c-></code> in <code class="highlight"><c- n>main</c-></code>.</p>
-   <p>Because the design of this library feature has a lot of tradeoffs it is the goal of this paper to offer as much
+   <p>Because the design of this library feature involves a lot of tradeoffs, it is the goal of this paper to offer as much
 implementation flexibility as possible.</p>
    <h3 class="heading settled" data-level="5.2" id="future-interface-expansion"><span class="secno">5.2. </span><span class="content">Future Interface Expansion</span><a class="self-link" href="#future-interface-expansion"></a></h3>
    <p>Author’s note: While most large applications should probably use a library for argument parsing, it is my hope that in
@@ -2474,9 +2475,11 @@ future use. Some names that could be considered instead include:</p>
    </ul>
    <p>In a very informal approval-voting-style poll on the Together C &amp; C++ Discord server (participants were asked to vote
 for all they found appealing) members showed a strong preference for either <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>arguments</c-></code> or <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>argv</c-></code> with eight
-and 17 votes respectively. Other options had no more than two votes. The last option, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>process</c-><c- o>::</c-><c- n>arguments</c-></code>, came up
-after the poll was started and thus wasn’t captured in the poll.</p>
-   <h2 class="heading settled" data-level="6" id="proposed-wording"><span class="secno">6. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
+and 17 votes respectively. Other options had no more than two votes. N.b.: The last option, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>process</c-><c- o>::</c-><c- n>arguments</c-></code>,
+came up after the poll was started and thus wasn’t captured in the poll.</p>
+   <h2 class="heading settled" data-level="6" id="reference-implementation"><span class="secno">6. </span><span class="content">Reference Implementation</span><a class="self-link" href="#reference-implementation"></a></h2>
+   <p>A reference implementation / proof of concept is at <a href="https://github.com/jeremy-rifkin/arguments">https://github.com/jeremy-rifkin/arguments</a>.</p>
+   <h2 class="heading settled" data-level="7" id="proposed-wording"><span class="secno">7. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Wording is relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a> and borrows extensively from existing wording.</p>
    <p>Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/headers">[headers]</a> table 24:</p>
    <blockquote>
@@ -2486,14 +2489,15 @@ after the poll was started and thus wasn’t captured in the poll.</p>
    <div class="insall">
     <h3 class="no-num no-toc mono heading settled" id="header-arguments-synopsis-argumentssyn"><span class="content">Header <code class="highlight"><c- o>&lt;</c-><c- n>arguments</c-><c- o>></c-></code> synopsis [arguments.syn]</span><a class="self-link" href="#header-arguments-synopsis-argumentssyn"></a></h3>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
-  <c- k>class</c-> <c- nc>arguments</c-><c- p>;</c->
   <c- k>class</c-> <c- nc>argument</c-><c- p>;</c->
+  <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c-> <c- k>class</c-> <c- nc>arguments</c-><c- p>;</c->
 <c- p>}</c->
 </pre>
     <h3 class="no-num no-toc mono heading settled" id="class-arguments-argumentsview"><span class="content">Class <code class="highlight"><c- n>arguments</c-></code> [arguments.view]</span><a class="self-link" href="#class-arguments-argumentsview"></a></h3>
     <p>Class <code class="highlight"><c- n>arguments</c-></code> is a read-only container holding a continuous range of <code class="highlight"><c- n>argument</c-></code> objects corresponding to arguments passed to the program.</p>
     <p>All member functions of <code class="highlight"><c- n>arguments</c-></code> have constant time complexity except the constructor.</p>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
+  <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c->
   <c- k>class</c-> <c- nc>arguments</c-> <c- p>{</c->
   <c- k>public</c-><c- o>:</c->
     <c- k>using</c-> <c- n>value_type</c-> <c- o>=</c-> <c- k>const</c-> <c- n>argument</c-><c- p>;</c->
@@ -2508,8 +2512,9 @@ after the poll was started and thus wasn’t captured in the poll.</p>
     <c- k>using</c-> <c- n>const_reverse_iterator</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>reverse_iterator</c-><c- o>&lt;</c-><c- n>const_iterator</c-><c- o>></c-><c- p>;</c->
     <c- k>using</c-> <c- n>reverse_iterator</c-> <c- o>=</c-> <c- n>const_reverse_iterator</c-><c- p>;</c->
 
-    <c- c1>// [arguments.view.cons], constructor</c->
-    <c- n>arguments</c-><c- p>();</c->
+    <c- c1>// [arguments.view.cons], constructors</c->
+    <c- n>arguments</c-><c- p>()</c-> <c- k>noexcept</c-><c- p>(</c-><c- k>noexcept</c-><c- p>(</c-><c- n>Allocator</c-><c- p>()))</c-> <c- o>:</c-> <c- n>arguments</c-><c- p>(</c-><c- n>Allocator</c-><c- p>())</c-> <c- p>{}</c->
+    <c- k>explicit</c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c->
 
     <c- c1>// [arguments.view.access], access</c->
     <c- n>reference</c-> <c- k>operator</c-><c- p>[](</c-><c- n>size_type</c-> <c- n>index</c-><c- p>)</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c->
@@ -2534,11 +2539,16 @@ after the poll was started and thus wasn’t captured in the poll.</p>
   <c- p>};</c->
 <c- p>}</c->
 </pre>
+    <h4 class="no-num no-toc mono heading settled" id="constructors-argumentsviewcons"><span class="content">Constructors [arguments.view.cons]</span><a class="self-link" href="#constructors-argumentsviewcons"></a></h4>
+    <p><code class="highlight"><c- k>explicit</c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c-></code></p>
+    <p class="indent"><em>Effects</em>: Constructs an <code class="highlight"><c- n>arguments</c-></code> object with the program’s arguments using the specified allocator.</p>
+    <p class="indent"><em>Throws</em>: May throw if <code class="highlight"><c- n>Allocator</c-><c- o>::</c-><c- n>allocate</c-></code> throws.</p>
     <h4 class="no-num no-toc mono heading settled" id="access-argumentsviewaccess"><span class="content">Access [arguments.view.access]</span><a class="self-link" href="#access-argumentsviewaccess"></a></h4>
     <p><code class="highlight"><c- n>value_type</c-> <c- k>operator</c-><c- p>[](</c-><c- n>size_type</c-> <c- n>index</c-><c- p>)</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code></p>
     <p class="indent"><em>Preconditions</em>: <code class="highlight"><c- n>index</c-> <c- o>&lt;</c-> <c- n>size</c-><c- p>()</c-></code> is <code class="highlight">true</code>.</p>
     <p class="indent"><em>Returns</em>: The argument at index <code class="highlight"><c- n>index</c-></code> passed into the program from the environment. It is implementation-defined whether, in a <code class="highlight"><c- n>main</c-></code> function with signature <code class="highlight"><c- n>main</c-><c- p>(</c-><c- b>int</c-> <c- n>argc</c-><c- p>,</c-> <c- b>char</c-><c- o>**</c-> <c- n>argv</c-><c- p>)</c-></code>, any modifications to <code class="highlight"><c- n>argv</c-></code> are reflected by <code class="highlight"><c- n>arguments</c-><c- o>::</c-><c- k>operator</c-><c- p>[]</c-></code>.</p>
     <p class="indent"><em>Throws</em>: Nothing.</p>
+    <p class="indent">[Note 1: <code class="highlight"><c- k>operator</c-><c- p>[](</c-><c- n>index</c-><c- p>)</c-></code> corresponds to <code class="highlight"><c- n>argv</c-><c- p>[</c-><c- n>index</c-><c- p>]</c-></code> in <code class="highlight"><c- n>main</c-><c- p>(</c-><c- b>int</c-> <c- n>argc</c-><c- p>,</c-> <c- b>char</c-><c- o>**</c-> <c- n>argv</c-><c- p>)</c-></code> — end note].</p>
     <p><code class="highlight"><c- n>value_type</c-> <c- nf>at</c-><c- p>(</c-><c- n>size_type</c-> <c- n>index</c-><c- p>)</c-> <c- k>const</c-><c- p>;</c-></code></p>
     <p class="indent"><em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- k>operator</c-><c- p>[](</c-><c- n>index</c-><c- p>);</c-></code> if <code class="highlight"><c- n>index</c-> <c- o>>=</c-> <c- n>size</c-><c- p>()</c-></code> is <code class="highlight">true</code>.</p>
     <p class="indent"><em>Throws</em>: <code class="highlight"><c- n>out_of_range</c-></code> if <code class="highlight"><c- n>index</c-> <c- o>>=</c-> <c- n>size</c-><c- p>()</c-></code> is <code class="highlight">true</code>.</p>
@@ -2546,7 +2556,7 @@ after the poll was started and thus wasn’t captured in the poll.</p>
     <p><code class="highlight"><c- n>size_type</c-> <c- nf>size</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code></p>
     <p class="indent"><em>Returns</em>: The number of program argument.</p>
     <p><code class="highlight"><c- n>size_type</c-> <c- nf>empty</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code></p>
-    <p class="indent"><em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>size</c-><c- p>()</c-> <c- o>==</c-> <c- mi>0</c-><c- p>;</c-></code>.</p>
+    <p class="indent"><em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>size</c-><c- p>()</c-> <c- o>==</c-> <c- mi>0</c-><c- p>;</c-></code></p>
     <h4 class="no-num no-toc mono heading settled" id="iterators-argumentsviewiterators"><span class="content">Iterators [arguments.view.iterators]</span><a class="self-link" href="#iterators-argumentsviewiterators"></a></h4>
     <p><code class="highlight"><c- k>using</c-> <c- n>const_iterator</c-> <c- o>=</c-> <c- d>/* implementation-defined */</c-><c- p>;</c-></code></p>
     <p class="indent"> The type models a <code class="highlight"><c- n>contiguous_iterator</c-></code> ([iterator.concept.contiguous]) and meets the <em>Cpp17RandomAccessIterator</em> requirements ([random.access.iterators]) whose value type is <code class="highlight"><c- n>value_type</c-></code> and whose reference type is <code class="highlight"><c- n>reference</c-></code>. </p>
@@ -2557,9 +2567,9 @@ after the poll was started and thus wasn’t captured in the poll.</p>
     <p> <code class="highlight"><c- n>const_iterator</c-> <c- nf>end</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code><br> <code class="highlight"><c- n>const_iterator</c-> <c- nf>cend</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code> </p>
     <p class="indent"> <em>Returns</em>: An iterator which is the past-the-end value. </p>
     <p> <code class="highlight"><c- n>const_iterator</c-> <c- nf>rbegin</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code><br> <code class="highlight"><c- n>const_iterator</c-> <c- nf>crbegin</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code> </p>
-    <p class="indent"> <em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>reverse_iterator</c-><c- p>(</c-><c- n>end</c-><c- p>());</c-></code>. </p>
+    <p class="indent"> <em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>reverse_iterator</c-><c- p>(</c-><c- n>end</c-><c- p>());</c-></code> </p>
     <p> <code class="highlight"><c- n>const_iterator</c-> <c- nf>rend</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code><br> <code class="highlight"><c- n>const_iterator</c-> <c- nf>crend</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></code> </p>
-    <p class="indent"> <em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>reverse_iterator</c-><c- p>(</c-><c- n>begin</c-><c- p>());</c-></code>. </p>
+    <p class="indent"> <em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <c- n>reverse_iterator</c-><c- p>(</c-><c- n>begin</c-><c- p>());</c-></code> </p>
     <h3 class="no-num no-toc mono heading settled" id="class-argument-argumentsargument"><span class="content">Class <code class="highlight"><c- n>argument</c-></code> [arguments.argument]</span><a class="self-link" href="#class-argument-argumentsargument"></a></h3>
     <p>An object of class <code class="highlight"><c- n>argument</c-></code> is a view of a character string argument passed to the program in an operating
 system-dependent format.</p>
