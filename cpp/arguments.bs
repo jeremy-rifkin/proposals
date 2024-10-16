@@ -6,7 +6,7 @@ Audience: EWGI, LEWGI
 Shortname: P3474
 Revision: 0
 Status: P
-Date: 2024-09-20
+Date: 2024-10-15
 Editor: Jeremy Rifkin
 Abstract: This paper proposes an encoding-friendly and modern interface for accessing command line arguments throughout a program.
 Markup Shorthands: markdown on
