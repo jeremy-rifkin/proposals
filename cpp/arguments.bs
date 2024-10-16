@@ -3,14 +3,14 @@ Title: std::arguments
 H1: <code>std::arguments</code>
 Group: WG21
 Audience: EWGI, LEWGI
-Shortname: Pnnnn
+Shortname: P3474
 Revision: 0
-Status: D
+Status: P
 Date: 2024-09-20
 Editor: Jeremy Rifkin
 Abstract: This paper proposes an encoding-friendly and modern interface for accessing command line arguments throughout a program.
 Markup Shorthands: markdown on
-ED: https://jeremy-rifkin.github.io/proposals/drafts/cpp/arguments-draft-2.html
+ED: https://isocpp.org/files/papers/P3474R0.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/arguments.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/arguments.bs)
 </pre>
 
