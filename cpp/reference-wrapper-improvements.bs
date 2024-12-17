@@ -1,0 +1,356 @@
+<pre class='metadata'>
+Title: Improve `reference_wrapper` Ergonomics
+Group: WG21
+Audience: LEWGI
+Shortname: Pnnnn
+Revision: 0
+Status: D
+Date: 2024-12-13
+Editor: Jeremy Rifkin, jeremy@rifkin.dev
+Abstract: `reference_wrapper` is an existing practice to fill a gap between nullability and reassignability while also providing a well-behaved reference object. This paper proposes a small set of ergonomic improvements.
+Markup Shorthands: markdown on
+ED: https://jeremy-rifkin.github.io/proposals/drafts/cpp/reference-wrapper-improvements-draft-1.html
+!Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/reference-wrapper-improvements.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/reference-wrapper-improvements.bs)
+</pre>
+
+<style>
+table, th, td {
+    border: none;
+}
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid black;
+}
+tbody tr:nth-child(even) {
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
+}
+</style>
+
+# Introduction
+
+References in C++ are aliases to objects. They are not guaranteed to occupy storage and cannot be reassigned. While
+references and pointers serve much the same purpose, references provide an important guarantee that they will never
+refer to a null object.
+
+References are often preferred in C++ since they do not require careful thought about nullability, however, there are
+times when references can't be used due to not behaving like objects and not being reassignable. For example, it's
+generally not possible to implement a copy or move assignment operator for a class with non-static reference members and
+an implicitly declared copy or move assignment operator will be defined as deleted. Additionally, due to not behaving
+like normal objects, all of the following are ill-formed: `int& arr[2]`, `std::array<int&, 2>`, `std::vector<int&>`,
+`std::variant<int&, float&>`, and `std::initializer_list<int&>`. Notably, `optional<T&>` is also ill-formed, however,
+[[P2988]] is on track for acceptance. Whenever any of the aforementioned constructs are desired, the limitations of
+references result in either needing to switch to a pointer or another wrapper type.
+
+Pointers work as replacements for references when object-like behavior or reassignability is desirable, however, they
+do not reflect non-nullability in the type system. This has implications with bug-proneness and may also lead to
+unnecessary null checks out of FUD which clutter code. Because of this, `reference_wrapper` is sometimes used to encode
+the nature of a reference in the type system while enjoying guarantees about nullability and the ability to use it in
+containers or similar.
+
+While `reference_wrapper` was initially added for certain metaprogramming uses requiring references that behave like
+regular objects it also serves to close a gap between reassignability and nullability:
+
+<center>
+  <table>
+    <tr>
+      <th></th>
+      <th>Not reassignable</th>
+      <th>Reassignable</th>
+    </tr>
+    <tr>
+      <th>Nullable</th>
+      <td>`T* const`</td>
+      <td>`T*`, `optional<T&>`</td>
+    </tr>
+    <tr>
+      <th>Non-nullable</th>
+      <td>`T&`</td>
+      <td>`reference_wrapper`</td>
+    </tr>
+  </table>
+</center>
+
+This use of `reference_wrapper` is a fairly wide-spread pattern that can be seen in codebases ranging from hobby
+projects to large and established codebases such as Chromium.
+
+While `reference_wrapper` is useful in situations where references aren't feasible, it has some notable shortcomings
+with ergonomics:
+
+1. `reference_wrapper` is a really long name, it both clutters code visually and can be a pain to type
+2. In order to access the referred-to object you must either convert to a reference with `operator T&` or call `.get()`,
+    which makes code quite verbose
+
+The desire for a non-nullable reassignable well-behaved reference has lead lead some developers to create their own
+reference wrapper-like types that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings.
+
+# Alternatives
+
+In cases where a non-nullable reassignable reference or reference that behaves like a normal object is desired,
+alternatives to `reference_wrapper` include:
+1. Just using pointers
+2. Add a `std::not_null` pointer wrapper to fill the gap instead
+    <center>
+      <table>
+        <tr>
+          <th></th>
+          <th>Not reassignable</th>
+          <th>Reassignable</th>
+        </tr>
+        <tr>
+          <th>Nullable</th>
+          <td>`T* const`</td>
+          <td>`T*`, `optional<T&>`</td>
+        </tr>
+        <tr>
+          <th>Non-nullable</th>
+          <td>`T&`</td>
+          <td>`reference_wrapper`, `gsl::not_null`</td>
+        </tr>
+      </table>
+    </center>
+3. Add first-order language support for reassignable references or references that behave as normal objects
+
+Pointers are undesirable for reasons mentioned earlier.
+
+There is prior art for `not_null` in the form of `gsl::not_null`. This wrapper type fundamentally mimics a pointer,
+though, and has constructors taking pointers that are null checked at runtime. `reference_wrapper` on the other hand is
+designed to model a reference. It's constructed only by a reference and and thus non-nullability is ensured as an
+invariant.
+
+First order language support for references that behave like objects and are assignable is a possibility but it would be
+a massive change to the language and so expanding `reference_wrapper` is proposed instead.
+
+# Proposal
+
+This paper proposes three changes:
+1. Add `template<typename T> using reference = reference_wrapper<T>;` as an alias
+2. Provide `reference_wrapper` through the `<utility>` header
+3. Add an `operator->` overload for forwarding member access as well as an `operator*` overload for symmetry
+
+`std::reference` is chosen as a shorter alias for `reference_wrapper` due to `std::ref` already being used.
+
+Adding `reference_wrapper` to `<utility>` follows the precedent of [[P0472]] which is on-track for acceptance into C++26
+and will add `monostate` to `<utility>`.
+
+While `->` is typically associated with pointers and pointer-like types, we can't overload `operator.` in C++
+so `->` is often used in its place, e.g. by `std::optional`. `operator*` is provided for symmetry and it serves as a
+shorthand for `.get()`, similar to `optional<T>::operator*` being a shorthand for `.value()`. Expanding the forwarding
+operators for `reference_wrapper` also follows the precedent of [[P2944]] which added forwarding comparison operators to
+`reference_wrapper`.
+
+# Proposed Wording
+
+<style>
+.mono {
+  font-family: Menlo, Consolas, "DejaVu Sans Mono", Monaco, monospace;
+}
+h3.mono {
+  font-size: 20px;
+}
+div.insall {
+  background: #cfc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.delall {
+  background: #fcc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.insall h3, div.insall h4,
+div.delall h3, div.delall h4 {
+  color: #000 !important;
+}
+div.insall pre {
+  border: 10px solid #cfc !important;
+  background: #0d0d0d !important;
+}
+div.delall pre {
+  border: 10px solid #fcc !important;
+  background: #0d0d0d !important;
+}
+@media (prefers-color-scheme: dark) {
+  div.insall {
+    background: #cfc !important;
+    color: #000 !important;
+  }
+  div.delall {
+    background: #fcc !important;
+    color: #000 !important;
+    padding: 5px;
+  }
+  div.insall h3, div.insall h4,
+  div.delall h3, div.delall h4 {
+    color: #000 !important;
+  }
+  div.insall pre {
+    border: 10px solid #cfc !important;
+    background: #0d0d0d !important;
+  }
+  div.delall pre {
+    border: 10px solid #fcc !important;
+    background: #0d0d0d !important;
+  }
+}
+.indent {
+  padding-left: 20px;
+}
+</style>
+
+Proposed wording relative to [[!N4950]]:
+
+Move [refwrap] and subsections to [utility.refwrap].
+
+Remove from [functional.syn]:
+
+<div class="delall">
+
+```cpp
+  // [refwrap], reference_wrapper
+  template<class T> class reference_wrapper;                                        // freestanding
+
+  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;                // freestanding
+  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;   // freestanding
+  template<class T> void ref(const T&&) = delete;                                   // freestanding
+  template<class T> void cref(const T&&) = delete;                                  // freestanding
+
+  template<class T>
+    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;              // freestanding
+  template<class T>
+    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;       // freestanding
+
+  // [refwrap.common.ref], common_reference related specializations
+  template<class R, class T, template<class> class RQual, template<class> class TQual>
+    requires see below
+  struct basic_common_reference<R, T, RQual, TQual>;
+
+  template<class T, class R, template<class> class TQual, template<class> class RQual>
+    requires see below
+  struct basic_common_reference<T, R, TQual, RQual>;
+```
+
+</div>
+
+Add to [utility.syn]:
+
+<div class="insall">
+
+```cpp
+  // [utility.refwrap], reference_wrapper
+  template<class T> class reference_wrapper;
+
+  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;
+  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;
+  template<class T> void ref(const T&&) = delete;
+  template<class T> void cref(const T&&) = delete;
+
+  template<class T>
+    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;
+  template<class T>
+    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;
+
+  template<class T> using reference = reference_wrapper<T>;
+
+  // [refwrap.common.ref], common_reference related specializations
+  template<class R, class T, template<class> class RQual, template<class> class TQual>
+    requires see below
+  struct basic_common_reference<R, T, RQual, TQual>;
+
+  template<class T, class R, template<class> class TQual, template<class> class RQual>
+    requires see below
+  struct basic_common_reference<T, R, TQual, RQual>;
+```
+
+</div>
+
+Add a paragraph at the end of [functional.syn]:
+
+<blockquote>
+  <ins>
+    The class templates, function templates, and alias templates defined in [utility.refwrap] are available when
+    `<functional>` is included.
+  </ins>
+</blockquote>
+
+Add to [utility.refwrap.general]:
+
+<pre highlight="cpp">
+namespace std {
+  template&lt;class T> class reference_wrapper {
+  public:
+    // types
+    using type = T;
+
+    // [refwrap.const], constructors
+    template&lt;class U>
+      constexpr reference_wrapper(U&&) noexcept(see below);
+    constexpr reference_wrapper(const reference_wrapper& x) noexcept;
+
+    // [refwrap.assign], assignment
+    constexpr reference_wrapper& operator=(const reference_wrapper& x) noexcept;
+
+    // [refwrap.access], access
+    constexpr operator T& () const noexcept;
+    constexpr T& get() const noexcept;
+    <ins>constexpr T* operator->() const noexcept;</ins>
+    <ins>constexpr T& operator*() const noexcept;</ins>
+
+    // [refwrap.invoke], invocation
+    template&lt;class... ArgTypes>
+      constexpr invoke_result_t&lt;T&, ArgTypes...> operator()(ArgTypes&&...) const
+        noexcept(is_nothrow_invocable_v&lt;T&, ArgTypes...>);
+
+    // [refwrap.comparisons], comparisons
+    friend constexpr bool operator==(reference_wrapper, reference_wrapper);
+    friend constexpr bool operator==(reference_wrapper, const T&);
+    friend constexpr bool operator==(reference_wrapper, reference_wrapper&lt;const T>);
+
+    friend constexpr auto operator&lt;=>(reference_wrapper, reference_wrapper);
+    friend constexpr auto operator&lt;=>(reference_wrapper, const T&);
+    friend constexpr auto operator&lt;=>(reference_wrapper, reference_wrapper&lt;const T>);
+  };
+
+  template&lt;class T>
+    reference_wrapper(T&) -> reference_wrapper&lt;T>;
+}
+</pre>
+
+Add to [utility.refwrap.access]:
+
+<div class="insall">
+  <p><code>constexpr T* operator->() const noexcept;</code></p>
+  <p class="indent">*Returns*: `&get()`.</p>
+
+  <p><code>constexpr T& operator*() const noexcept;</code></p>
+  <p class="indent">*Returns*: The stored reference.</p>
+</div>
+
+<pre class="biblio">
+{
+    "P0472": {
+        "title": "Put std::monostate in <utility>",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r2.pdf"
+    },
+    "P2988": {
+        "title": "std::optional<T&>",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2988r8.pdf"
+    },
+    "P2944": {
+        "title": "Comparisons for reference_wrapper",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2944r3.html"
+    }
+}
+</pre>
