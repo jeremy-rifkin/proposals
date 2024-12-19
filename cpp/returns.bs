@@ -1,0 +1,262 @@
+<pre class='metadata'>
+Title: Missing Returns Should Be Ill-Formed
+Group: WG21
+Audience: EWGI
+Shortname: Pnnnn
+Revision: 0
+Status: D
+Date: 2024-12-18
+Editor: Jeremy Rifkin, jeremy@rifkin.dev
+Abstract: Flowing off the end of a non-void, non-main, and non-coroutine function is undefined behavior in C++. This is an easy footgun to run into in C++ and all major C++ compilers currently warn about missing returns. We propose making this ill-formed, instead requiring `std::unreachable()` to be used to explicitly mark unreachable code paths.
+Markup Shorthands: markdown on
+ED: https://jeremy-rifkin.github.io/proposals/cpp/returns.html
+!Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/returns.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/returns.bs)
+</pre>
+
+<style>
+table, th, td {
+    border: none;
+}
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid black;
+}
+tbody tr:nth-child(even) {
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
+}
+</style>
+
+# Introduction
+
+Reaching the end of a non-void, non-main, and non-coroutine function without returning is undefined behavior in C and
+C++. Historically, in C this partly originated from pre-standard C defaulting return types to `int` and lacking `void`.
+As C and C++ evolved, leaving non-returning paths as unreachable compilers to assume such code paths are unreachable and
+optimize accordingly, e.g. the following results in only one comparison:
+```cpp
+enum class E { A, B };
+
+std::string_view to_sv(E e) {
+    if(e == E::A) {
+        return "A";
+    } else if(e == E::B) {
+        return "B";
+    }
+}
+```
+```asm
+to_sv(E):
+        test    edi, edi
+        lea     rax, [rip + .L.str]
+        lea     rdx, [rip + .L.str.1]
+        cmove   rdx, rax
+        mov     eax, 1
+        ret
+```
+
+This is, however, a footgun in C++ and a safety issue. For example, if `C` is added to the enum in the above code it
+would be easy to inadvertently forget to update `to_sv` for this new case, especially if `to_sv`'s definition is in a
+separate file. On an optimized build calling `to_sv(E::C)` typically results in buggy behavior due to an incorrect
+string being returned. In a debug build this typically crashes.
+
+Most widely used languages do not allow such footguns and issue compile-time errors for such code.
+
+Currently all major C++ compilers issue warnings for missing returns but the developer must opt-in to this being treated
+as a critical error. While many projects do opt-in to treating these warnings as errors, many don't and some programmers
+are in the habit of ignoring warnings. Given that C++ now has a standard means to explicitly mark code paths as
+unreachable, namely `std::unreachable`, we propose that missing returns in control flow paths be ill-formed in favor
+of explicitly marking non-returning paths as unreachable.
+
+# Current Implementation Behavior
+
+GCC, Clang, MSVC, ICX, and EDG currently warn on missing returns by default:
+[https://godbolt.org/z/5M3xs88W6](https://godbolt.org/z/5M3xs88W6).
+
+<table>
+    <thead>
+        <tr>
+            <th>Compiler</th>
+            <th>Warns about missing returns by default since</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>GCC</td>
+            <td>8.1</td>
+        </tr>
+        <tr>
+            <td>Clang</td>
+            <td>At least 3.0.0*</td>
+        </tr>
+        <tr>
+            <td>MSVC</td>
+            <td>At least 19.20*</td>
+        </tr>
+        <tr>
+            <td>ICC</td>
+            <td>At least 13.0.1</td>
+        </tr>
+        <tr>
+            <td>ICX</td>
+            <td>At least 2021.1.2</td>
+        </tr>
+        <tr>
+            <td>EDG</td>
+            <td>At least 6.5</td>
+        </tr>
+    </tbody>
+</table>
+
+Any entries reading "At least" correspond to the earliest version available on Compiler Explorer.
+
+Link: [https://godbolt.org/z/r86YshMhf](https://godbolt.org/z/r86YshMhf).
+
+# Behavior in Other Languages
+
+Most widely used languages do not allow missing returns in functions:
+
+- C: Undefined behavior
+- C#: Compile error
+- D: Compile error, explicitly mentions `assert(0);` as a way to mark unreachability
+- Go: Compile error
+- Java: Compile error
+- Kotlin: Compile error
+- Rust: Compile error
+- Scala: Compile error
+- Swift: Compile error
+- TypeScript: Compile error
+
+# Implementability
+
+The following code does not return in all code paths yet the non-returning code path is provably unreachable:
+
+```cpp
+int square(int num) {
+    if(num != 0.1) {
+        return num * num;
+    }
+    // ill-formed?
+}
+```
+
+Correctly identifying cases where non-returning code paths are provably unreachable would require heroic effort by
+compilers in the general case and would ultimately prove futile once confronted with undecidable problems. We do not
+propose this should be well-formed or that C++ compilers should attempt to handle such cases.
+
+Languages which treat missing returns as errors simply error when there is any code path through the AST-level control
+flow graph without any attempt to prove dead code paths, and C++ should do the same.
+
+# Impact on Existing Code
+
+TODO
+
+Many projects currently use `-Werror=return-type`, or otherwise disallow missing returns.
+
+# Deprecation or Removal
+
+TODO
+
+# Other Papers
+
+[[P2806]] proposes requiring returns from all code paths non-void `do` expressions.
+
+# Proposed Wording
+
+<style>
+.mono {
+  font-family: Menlo, Consolas, "DejaVu Sans Mono", Monaco, monospace;
+}
+h3.mono {
+  font-size: 20px;
+}
+span.ins {
+  background: #cfc;
+  color: #000;
+  text-decoration: underline;
+}
+span.del {
+  background: #fcc;
+  color: #000;
+  text-decoration: underline;
+}
+div.insall {
+  background: #cfc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.delall {
+  background: #fcc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.insall h3, div.insall h4,
+div.delall h3, div.delall h4 {
+  color: #000 !important;
+}
+div.insall pre {
+  border: 10px solid #cfc !important;
+  background: #0d0d0d !important;
+}
+div.delall pre {
+  border: 10px solid #fcc !important;
+  background: #0d0d0d !important;
+}
+@media (prefers-color-scheme: dark) {
+  div.insall {
+    background: #cfc !important;
+    color: #000 !important;
+  }
+  div.delall {
+    background: #fcc !important;
+    color: #000 !important;
+    padding: 5px;
+  }
+  div.insall h3, div.insall h4,
+  div.delall h3, div.delall h4 {
+    color: #000 !important;
+  }
+  div.insall pre {
+    border: 10px solid #cfc !important;
+    background: #0d0d0d !important;
+  }
+  div.delall pre {
+    border: 10px solid #fcc !important;
+    background: #0d0d0d !important;
+  }
+}
+.indent {
+  padding-left: 20px;
+}
+</style>
+
+Proposed wording relative to [[!N4950]]:
+
+Update [stmt.return] paragraph 4 as follows:
+
+> Flowing off the end of a constructor, a destructor, or a non-coroutine function with a *cv* `void` return type is
+> equivalent to a `return` with no operand. Otherwise, flowing off the end of a function that is neither main
+> ([basic.start.main]) nor a coroutine ([dcl.fct.def.coroutine]) <span class="del">results in undefined behavior</span>
+> <span class="ins">is ill-formed</span>.
+
+TODO
+
+<pre class="biblio">
+{
+    "P2806": {
+        "title": "do expressions",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2806r2.html"
+    }
+}
+</pre>
