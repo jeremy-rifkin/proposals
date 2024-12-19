@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version ac5ea272d, updated Fri Dec 6 15:45:15 2024 -0800" name="generator">
   <link href="https://jeremy-rifkin.github.io/proposals/drafts/cpp/reference-wrapper-improvements-draft-1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="90c3711de95b3e34838aa7d7dabc7c923a93a45b" name="revision">
+  <meta content="5b97c68721fc7d5ec9ff9c437ef85400a3cc153b" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2253,8 +2253,8 @@ with ergonomics:</p>
      <p>In order to access the referred-to object you must either convert to a reference with <code class="highlight"><c- k>operator</c-> <c- n>T</c-><c- o>&amp;</c-></code> or call <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code>,
 which makes code quite verbose</p>
    </ol>
-   <p>The desire for a non-nullable reassignable well-behaved reference has lead lead some developers to create their own
-reference wrapper-like types that are more ergonomic, in lieu of <code class="highlight"><c- n>reference_wrapper</c-></code>’s shortcomings.</p>
+   <p>The desire for a non-nullable reassignable well-behaved reference has led some developers to create their own reference
+wrapper-like types that are more ergonomic, in lieu of <code class="highlight"><c- n>reference_wrapper</c-></code>’s shortcomings.</p>
    <h2 class="heading settled" data-level="2" id="alternatives"><span class="secno">2. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
    <p>In cases where a non-nullable reassignable reference or reference that behaves like a normal object is desired,
 alternatives to <code class="highlight"><c- n>reference_wrapper</c-></code> include:</p>
@@ -2286,8 +2286,7 @@ alternatives to <code class="highlight"><c- n>reference_wrapper</c-></code> incl
    <p>Pointers are undesirable for reasons mentioned earlier.</p>
    <p>There is prior art for <code class="highlight"><c- n>not_null</c-></code> in the form of <code class="highlight"><c- n>gsl</c-><c- o>::</c-><c- n>not_null</c-></code>. This wrapper type fundamentally mimics a pointer,
 though, and has constructors taking pointers that are null checked at runtime. <code class="highlight"><c- n>reference_wrapper</c-></code> on the other hand is
-designed to model a reference. It’s constructed only by a reference and and thus non-nullability is ensured as an
-invariant.</p>
+designed to model a reference. It’s constructed only by a reference and thus non-nullability is ensured as an invariant.</p>
    <p>First order language support for references that behave like objects and are assignable is a possibility but it would be
 a massive change to the language and so expanding <code class="highlight"><c- n>reference_wrapper</c-></code> is proposed instead.</p>
    <h2 class="heading settled" data-level="3" id="proposal"><span class="secno">3. </span><span class="content">Proposal</span><a class="self-link" href="#proposal"></a></h2>
