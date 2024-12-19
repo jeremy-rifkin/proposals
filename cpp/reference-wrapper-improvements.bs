@@ -93,8 +93,8 @@ with ergonomics:
 2. In order to access the referred-to object you must either convert to a reference with `operator T&` or call `.get()`,
     which makes code quite verbose
 
-The desire for a non-nullable reassignable well-behaved reference has lead lead some developers to create their own
-reference wrapper-like types that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings.
+The desire for a non-nullable reassignable well-behaved reference has led some developers to create their own reference
+wrapper-like types that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings.
 
 # Alternatives
 
@@ -127,8 +127,7 @@ Pointers are undesirable for reasons mentioned earlier.
 
 There is prior art for `not_null` in the form of `gsl::not_null`. This wrapper type fundamentally mimics a pointer,
 though, and has constructors taking pointers that are null checked at runtime. `reference_wrapper` on the other hand is
-designed to model a reference. It's constructed only by a reference and and thus non-nullability is ensured as an
-invariant.
+designed to model a reference. It's constructed only by a reference and thus non-nullability is ensured as an invariant.
 
 First order language support for references that behave like objects and are assignable is a possibility but it would be
 a massive change to the language and so expanding `reference_wrapper` is proposed instead.
