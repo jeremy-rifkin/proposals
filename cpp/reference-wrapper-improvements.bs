@@ -106,7 +106,7 @@ While `reference_wrapper` was initially added for certain metaprogramming uses r
 regular objects, it has come to be a fairly wide-spread pattern that can be seen in codebases ranging from hobby
 projects to large and established codebases such as Chromium. A cursory GitHub code search for `reference_wrapper` in
 open-source C++ code at the time of writing yields 45k results:
-[Code Search](https://github.com/search?type=code&q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B).
+<a href="https://github.com/search?type=code&q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
 Many of these uses are:
 - `std::reference_wrapper<T>` as a non-static data member
 - `std::vector<std::reference_wrapper<T>>`
