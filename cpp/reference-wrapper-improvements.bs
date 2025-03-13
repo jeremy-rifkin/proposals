@@ -45,7 +45,7 @@ References in C++ are aliases to objects. They are not guaranteed to occupy stor
 objects themselves. Pointers, on the other hand, point to objects while being reassignable objects. While references and
 pointers serve much the same purpose, references provide an important guarantee that they will never refer to a null
 object. Thus, there is a gap in core language and library support for representing non-nullable but reassignable
-indirection type:
+indirection:
 
 <center>
   <table>
@@ -57,7 +57,7 @@ indirection type:
     <tr>
       <th>Nullable</th>
       <td>`T* const`</td>
-      <td>`T*`, `optional<T&>`</td>
+      <td>`T*`</td>
     </tr>
     <tr>
       <th>Non-nullable</th>
@@ -106,13 +106,12 @@ programmer would simply like to reassign a `T& ref`, the limitations of referenc
 a pointer or another wrapper type.
 
 Pointers work as replacements for references when object-like behavior or reassignability is desirable, however, they
-do not reflect non-nullability in the type system. This has implications with bug-proneness and may also lead to
-unnecessary null checks out of an abundance of caution when non-nullability cannot be readily shown. This can increase
-complexity and clutter code.
+do not reflect non-nullability in the type system. Losing this valuable information in the type system has implications
+with bug-proneness and may also lead to unnecessary null checks out of an abundance of caution in code paths where
+non-nullability cannot be readily shown. This can increase complexity and clutter code.
 
-The desire for a non-nullable reassignable well-behaved reference has led to `reference_wrapper` emerging as a standard
-utility to encode the nature of a reference in the type system while enjoying guarantees about non-nullability and the
-ability to use it in containers or similar. For example, a highly upvoted comment on
+The desire for a non-nullable reassignable well-behaved reference has led to many to reach for `reference_wrapper` as a
+standard utility with these semantics. For example, a highly upvoted comment on
 [Why does std::optional not have a specialization for reference types?](https://stackoverflow.com/q/26858034/15675011)
 mentions using `reference_wrapper` as a workaround.
 
@@ -131,12 +130,13 @@ Many of these uses are:
 The first few pages of results suggest these categories account for the vast majority of use of `reference_wrapper` in
 open-source C++ code.
 
-Due to its semantics and status as an existing practice for this use case, I think it would be preferable to expand the
-intended use-case of `reference_wrapper` and improve its ergonomics as opposed to introducing a new vocabulary type.
+Due to its semantics and status as an existing practice for this use case, it's fitting to expand the intended use-case
+of `reference_wrapper` and improve its ergonomics as a general utility instead of introducing a new vocabulary type for
+this use-case.
 
 # Alternatives
 
-Alternatives for closing the gap between nullability and reassignability include:
+Alternatives to `reference_wrapper` for this use-case include:
 
 1. Tell developers to just use pointers
 2. Add a `std::not_null` pointer wrapper to fill the gap instead
@@ -150,7 +150,7 @@ Alternatives for closing the gap between nullability and reassignability include
         <tr>
           <th>Nullable</th>
           <td>`T* const`</td>
-          <td>`T*`, `optional<T&>`</td>
+          <td>`T*`</td>
         </tr>
         <tr>
           <th>Non-nullable</th>
@@ -168,8 +168,8 @@ though, and has constructors taking pointers that are null checked at runtime. `
 is designed to model a reference. It's constructed only by a reference and thus non-nullability is ensured as an
 invariant at the type system level.
 
-First-order language support for references that behave like objects and are assignable is a possibility but it would be
-a massive change to the language. Instead, improving `reference_wrapper` for this use-case seems preferable.
+First-order language support for references that behave like objects and are assignable is a possibility, but, it would
+be a massive change to the language. Instead, improving `reference_wrapper` for this use-case seems preferable.
 
 # Proposal
 
@@ -192,7 +192,7 @@ types are less so. Fundamentally, the main commonality between all these types i
 proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for `reference_wrapper`.
 
 With the expanded use-case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
-paper adds the utility to `<utility>`, following the precedent of [[P0472]] which added `monostate` to `<utility>`.
+follows the precedent of [[P0472]] which added `monostate` to `<utility>`.
 
 # Proposed Wording
 
@@ -293,21 +293,21 @@ Add to [utility.syn]:
 
 ```cpp
   // [utility.refwrap], reference_wrapper
-  template<class T> class reference_wrapper;
+  template<class T> class reference_wrapper;                                        // freestanding
 
-  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;
-  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;
-  template<class T> void ref(const T&&) = delete;
-  template<class T> void cref(const T&&) = delete;
+  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;                // freestanding
+  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;   // freestanding
+  template<class T> void ref(const T&&) = delete;                                   // freestanding
+  template<class T> void cref(const T&&) = delete;                                  // freestanding
 
   template<class T>
-    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;
+    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;              // freestanding
   template<class T>
-    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;
+    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;       // freestanding
 
-  template<class T> using reference = reference_wrapper<T>;
+  template<class T> using reference = reference_wrapper<T>;                         // freestanding
 
-  // [refwrap.common.ref], common_reference related specializations
+  // [utility.refwrap.common.ref], common_reference related specializations
   template<class R, class T, template<class> class RQual, template<class> class TQual>
     requires see below
   struct basic_common_reference<R, T, RQual, TQual>;
@@ -337,26 +337,26 @@ namespace std {
     // types
     using type = T;
 
-    // [refwrap.const], constructors
+    // [utility.refwrap.const], constructors
     template&lt;class U>
       constexpr reference_wrapper(U&&) noexcept(see below);
     constexpr reference_wrapper(const reference_wrapper& x) noexcept;
 
-    // [refwrap.assign], assignment
+    // [utility.refwrap.assign], assignment
     constexpr reference_wrapper& operator=(const reference_wrapper& x) noexcept;
 
-    // [refwrap.access], access
+    // [utility.refwrap.access], access
     constexpr operator T& () const noexcept;
     constexpr T& get() const noexcept;
     <ins>constexpr T* operator->() const noexcept;</ins>
     <ins>constexpr T& operator*() const noexcept;</ins>
 
-    // [refwrap.invoke], invocation
+    // [utility.refwrap.invoke], invocation
     template&lt;class... ArgTypes>
       constexpr invoke_result_t&lt;T&, ArgTypes...> operator()(ArgTypes&&...) const
         noexcept(is_nothrow_invocable_v&lt;T&, ArgTypes...>);
 
-    // [refwrap.comparisons], comparisons
+    // [utility.refwrap.comparisons], comparisons
     friend constexpr bool operator==(reference_wrapper, reference_wrapper);
     friend constexpr bool operator==(reference_wrapper, const T&);
     friend constexpr bool operator==(reference_wrapper, reference_wrapper&lt;const T>);
