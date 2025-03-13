@@ -9,7 +9,7 @@ Date: 2025-03-12
 Editor: Jeremy Rifkin, jeremy@rifkin.dev
 Abstract: `reference_wrapper` is an existing practice to fill a gap between nullability and reassignability while also providing a well-behaved reference object. This paper proposes a small set of ergonomic improvements.
 Markup Shorthands: markdown on
-ED: https://isocpp.org/files/papers/P3660R0.html
+ED: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/reference-wrapper-improvements.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/reference-wrapper-improvements.bs)
 </pre>
 
@@ -42,10 +42,10 @@ tbody tr:nth-child(even) {
 # Introduction
 
 References in C++ are aliases to objects. They are not guaranteed to occupy storage, cannot be reassigned, and are not
-objects themselves. Pointers, on the other hand, point to objects while being reassignable objects themselves. While
-references and pointers serve much the same purpose, references provide an important guarantee that they will never
-refer to a null object. Thus, there is a gap in core language or library support for representing a non-nullable but
-reassignable:
+objects themselves. Pointers, on the other hand, point to objects while being reassignable objects. While references and
+pointers serve much the same purpose, references provide an important guarantee that they will never refer to a null
+object. Thus, there is a gap in core language and library support for representing non-nullable but reassignable
+indirection type:
 
 <center>
   <table>
@@ -57,7 +57,7 @@ reassignable:
     <tr>
       <th>Nullable</th>
       <td>`T* const`</td>
-      <td>`T*`</td>
+      <td>`T*`, `optional<T&>`</td>
     </tr>
     <tr>
       <th>Non-nullable</th>
@@ -68,24 +68,38 @@ reassignable:
 </center>
 
 When faced with a problem where such a non-nullable reassignable reference type would be useful, developers must either
-switch to pointers or use another wrapper type with these properties. `std::reference_wrapper` has emerged as an
-existing practice for this use case, however, because it was not designed for this purpose it suffers two notable
-ergonomic issues:
+switch to pointers or use another wrapper type with these properties. Due to its availability, `std::reference_wrapper`
+has emerged as an existing practice for this use case. However, because it was designed for certain metaprogramming uses
+requiring references that behave like regular objects as opposed to serving as a more general utility type it is not
+very ergonomic.
 
-1. `reference_wrapper` is a cumbersome name; it both clutters code visually and can be a pain to type
-2. In order to access the referenced object developers must either convert to a reference with `operator T&` or call
-    `.get()` which makes code quite verbose
+Ergonomic limitations of `reference_wrapper` have lead some developers to create their own reference wrapper-like types
+that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings. For example, Barry Revzin shared on the
+`std-proposals` mailing list in [September 2024](https://lists.isocpp.org/std-proposals/2024/09/11280.php):
 
-This paper proposes a handful of ergonomic improvements so that `reference_wrapper` can better close the gap between
-nullability and reassignability.
+> <i>In reply to a question asking if `.get()` was not already sufficient:</i>
+>
+> For what it's worth, we have a template that inherits from
+> `reference_wrapper<T>` specifically for this reason. After a lot of use,
+> `r.get().f()` is pretty verbose compared to `r->f()`.
+>
+> Well that and the name `reference_wrapper<T>` is also very verbose so ours is
+> just `Ref<T>`.
+
+Both the name and constantly having to call `.get()` results in this utility being quite cumbersome to use.
+`std::optional` would be similarly cumbersome if developers had to constantly call `.value()` as opposed to being able
+to use `operator->` for member access.
+
+This paper proposes a small set of ergonomic improvements, transforming the type from a metaprogramming utility to a
+more broadly-applicable vocabulary type that closes the gap between nullability and reassignability.
 
 # Motivation
 
-References are often preferred in C++ because they do not require careful thought about nullability, however, there are
+References are often preferred in C++ because they do not require careful thought about nullability. However, there are
 times when references can't be used due to not behaving like objects and not being reassignable. For example, it's
 generally not possible to implement a copy or move assignment operator for a class with non-static reference members and
-an implicitly-declared copy or move assignment operator will be defined as deleted. Additionally, due to not behaving
-like normal objects, all of the following are ill-formed: `int& arr[2]`, `std::array<int&, 2>`, `std::vector<int&>`,
+implicitly-declared copy and move assignment operators are defined as deleted. Additionally, due to not behaving like
+normal objects, all of the following are ill-formed: `int& arr[2]`, `std::array<int&, 2>`, `std::vector<int&>`,
 `std::variant<int&, float&>`, and `std::initializer_list<int&>`. Notably, `std::optional<T&>` is also ill-formed,
 however, [[P2988]] is on track for acceptance. Whenever any of the aforementioned constructs are desired, or a
 programmer would simply like to reassign a `T& ref`, the limitations of references result in either needing to switch to
@@ -102,10 +116,9 @@ ability to use it in containers or similar. For example, a highly upvoted commen
 [Why does std::optional not have a specialization for reference types?](https://stackoverflow.com/q/26858034/15675011)
 mentions using `reference_wrapper` as a workaround.
 
-While `reference_wrapper` was initially added for certain metaprogramming uses requiring references that behave like
-regular objects, it has come to be a fairly wide-spread pattern that can be seen in codebases ranging from hobby
-projects to large and established codebases such as Chromium. A cursory GitHub code search for `reference_wrapper` in
-open-source C++ code at the time of writing yields 45k results:
+While `reference_wrapper` was initially added for certain metaprogramming uses, it has come to be a fairly wide-spread
+pattern that can be seen in codebases ranging from hobby projects to large and established codebases such as Chromium. A
+cursory GitHub code search for `reference_wrapper` in open-source C++ code at the time of writing yields 45k results:
 <a href="https://github.com/search?type=code&q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
 Many of these uses are:
 - `std::reference_wrapper<T>` as a non-static data member
@@ -113,30 +126,13 @@ Many of these uses are:
 - `std::optional<std::reference_wrapper<T>>`
 - `std::map<K, std::reference_wrapper<V>>`
 - Use in `std::variant`
-- Other container uses
+- Use in other containers
 
 The first few pages of results suggest these categories account for the vast majority of use of `reference_wrapper` in
 open-source C++ code.
 
-Despite its availability, ergonomic limitations of `reference_wrapper` have lead some developers to create their own
-reference wrapper-like types that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings. For example, Barry
-Revzin shared on the `std-proposals` mailing list in
-[September 2024](https://lists.isocpp.org/std-proposals/2024/09/11280.php):
-
-> <i>In reply to a question asking if `.get()` was not already sufficient:</i>
->
-> For what it's worth, we have a template that inherits from
-> `reference_wrapper<T>` specifically for this reason. After a lot of use,
-> `r.get().f()` is pretty verbose compared to `r->f()`.
->
-> Well that and the name `reference_wrapper<T>` is also very verbose so ours is
-> just `Ref<T>`.
-
-Constantly having to call `.get()` ends up being extremely cumbersome. There is a reason why developers typically use
-`std::optional<T>::operator->` as opposed to constantly calling `.value()`: It quickly becomes cumbersome. This issue is
-easily resolved, as is the issue of a long name, as Barry illustrated. Improving ergonomics for `reference_wrapper` in
-the standard library would better allow it to be used by developers for closing the semantic gap between nullability and
-reassignability.
+Due to its semantics and status as an existing practice for this use case, I think it would be preferable to expand the
+intended use-case of `reference_wrapper` and improve its ergonomics as opposed to introducing a new vocabulary type.
 
 # Alternatives
 
@@ -170,9 +166,9 @@ Pointers are undesirable for reasons mentioned earlier.
 There is prior art for `not_null` in the form of `gsl::not_null`. This wrapper type fundamentally mimics a pointer,
 though, and has constructors taking pointers that are null checked at runtime. `reference_wrapper`, on the other hand,
 is designed to model a reference. It's constructed only by a reference and thus non-nullability is ensured as an
-invariant.
+invariant at the type system level.
 
-First order language support for references that behave like objects and are assignable is a possibility but it would be
+First-order language support for references that behave like objects and are assignable is a possibility but it would be
 a massive change to the language. Instead, improving `reference_wrapper` for this use-case seems preferable.
 
 # Proposal
@@ -180,19 +176,23 @@ a massive change to the language. Instead, improving `reference_wrapper` for thi
 This paper proposes three changes:
 1. Add `template<typename T> using reference = reference_wrapper<T>;` as an alias
 2. Add an `operator->` overload for forwarding member access as well as an `operator*` overload for symmetry
-3. Provide `reference_wrapper` and this alias through the `<utility>` header
+3. Provide `reference_wrapper` and the `reference` alias through the `<utility>` header
 
 `std::reference` is chosen as a shorter alias for `reference_wrapper` due to `std::ref` already being used.
 
-While `->` is typically associated with pointers and pointer-like types, we can't overload `operator.` in C++
-so `->` is often used in its place, e.g. by `std::optional`. `operator*` is provided for symmetry and it serves as a
-shorthand for `.get()`, similar to `optional<T>::operator*` being a shorthand for `.value()`. Expanding the forwarding
-operators for `reference_wrapper` also follows the precedent of [[P2944]] which added forwarding comparison operators to
-`reference_wrapper`.
+Expanding the forwarding operations for `reference_wrapper` follows the precedent of [[P2944]], which added forwarding
+comparison operators to `reference_wrapper`. While `operator->` is typically associated with pointers and pointer-like
+types (such as iterators or smart pointers), it is the only option for member access forwarding in lieu of `operator.`.
+This use of `operator->` isn't without precedent and it isn't uncommon even for types that aren't pointer-like. For
+example, all of the following have `operator->` overloads for convenience: `std::optional`, `std::expected`, or types
+like `proxy_holder`/`arrow_proxy` ([stackoverflow](https://stackoverflow.com/a/26496041/15675011)) or `pilfered`
+([boost json](https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp), [[P0308]]).
+`std::optional` is arguably similar to a pointer in that is nullable, however, `std::expected` and the proxy / wrapper
+types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather serving as
+proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for `reference_wrapper`.
 
-With the expanded use-case for `reference_wrapper` it is better provided through `<utility>` than `<functional>`. This
-paper adds the utility to `<utility>`, following the precedent of [[P0472]] (which adds `monostate` to `<utility>` for
-C++26).
+With the expanded use-case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
+paper adds the utility to `<utility>`, following the precedent of [[P0472]] which added `monostate` to `<utility>`.
 
 # Proposed Wording
 
@@ -323,7 +323,7 @@ Add a paragraph at the end of [functional.syn]:
 
 <blockquote>
   <ins>
-    The class templates, function templates, and alias templates defined in [utility.refwrap] are available when
+    The class templates, function templates, and alias template defined in [utility.refwrap] are available when
     `<functional>` is included.
   </ins>
 </blockquote>
@@ -385,7 +385,7 @@ Add to [utility.refwrap.access]:
 {
     "P0472": {
         "title": "Put std::monostate in <utility>",
-        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r2.pdf"
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r3.pdf"
     },
     "P2988": {
         "title": "std::optional<T&>",
@@ -394,6 +394,10 @@ Add to [utility.refwrap.access]:
     "P2944": {
         "title": "Comparisons for reference_wrapper",
         "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2944r3.html"
+    },
+    "P0308": {
+        "title": "Valueless Variants Considered Harmful",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0308r0.html"
     }
 }
 </pre>
