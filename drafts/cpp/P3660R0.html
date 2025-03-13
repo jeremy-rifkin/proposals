@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 6270e4735, updated Tue Aug 6 12:12:30 2024 -0700" name="generator">
   <link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="e84136f20de6c7b203159d00123d9f30099e7469" name="revision">
+  <meta content="3f2b716d4b899df99e70808c386f838f37b23f47" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2235,7 +2235,8 @@ indirection:</p>
    <p>When faced with a problem where such a non-nullable reassignable reference type would be useful, developers must either
 switch to pointers or use another wrapper type with these properties. Due to its availability, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>reference_wrapper</c-></code> has emerged as an existing practice for this use case. However, because it was designed for certain metaprogramming uses
 requiring references that behave like regular objects as opposed to serving as a more general utility type it is not
-very ergonomic.</p>
+very ergonomic. The two most notable shortcomings are that the name is long and cumbersome and the only ways to access
+the referenced object are a conversion operator or <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> instead of a forwarding member access operator.</p>
    <p>Ergonomic limitations of <code class="highlight"><c- n>reference_wrapper</c-></code> have lead some developers to create their own reference wrapper-like types
 that are more ergonomic, in lieu of <code class="highlight"><c- n>reference_wrapper</c-></code>’s shortcomings. For example, Barry Revzin shared on the <code class="highlight"><c- n>std</c-><c- o>-</c-><c- n>proposals</c-></code> mailing list in <a href="https://lists.isocpp.org/std-proposals/2024/09/11280.php">September 2024</a>:</p>
    <blockquote>
@@ -2246,8 +2247,9 @@ just <code class="highlight"><c- n>Ref</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c
    </blockquote>
    <p>Both the name and constantly having to call <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> results in this utility being quite cumbersome to use. <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code> would be similarly cumbersome if developers had to constantly call <code class="highlight"><c- p>.</c-><c- n>value</c-><c- p>()</c-></code> as opposed to being able
 to use <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> for member access.</p>
-   <p>This paper proposes a small set of ergonomic improvements, transforming the type from a metaprogramming utility to a
-more broadly-applicable vocabulary type that closes the gap between nullability and reassignability.</p>
+   <p>This paper proposes a small set of ergonomic improvements to address these limitations and transform the type from a
+metaprogramming utility to a more broadly-applicable vocabulary type that closes the gap between nullability and
+reassignability.</p>
    <h2 class="heading settled" data-level="2" id="motivation"><span class="secno">2. </span><span class="content">Motivation</span><a class="self-link" href="#motivation"></a></h2>
    <p>References are often preferred in C++ because they do not require careful thought about nullability. However, there are
 times when references can’t be used due to not behaving like objects and not being reassignable. For example, it’s
