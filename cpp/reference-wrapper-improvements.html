@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 4b8aed3f7, updated Thu Mar 6 12:35:01 2025 -0800" name="generator">
   <link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="9e289a28bc62383c1c7c522acf0b0ce2343b1bd6" name="revision">
+  <meta content="00b8f4f8b2a305da2874f670ec496e9518cb6c14" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2214,7 +2214,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 objects themselves. Pointers, on the other hand, point to objects while being reassignable objects. While references and
 pointers serve much the same purpose, references provide an important guarantee that they will never refer to a null
 object. Thus, there is a gap in core language and library support for representing non-nullable but reassignable
-indirection type:</p>
+indirection:</p>
    <center>
     <table>
      <tbody>
@@ -2225,7 +2225,7 @@ indirection type:</p>
       <tr>
        <th>Nullable
        <td><code class="highlight"><c- n>T</c-><c- o>*</c-> <c- k>const</c-></code>
-       <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>, <code class="highlight"><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;></c-></code>
+       <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>
       <tr>
        <th>Non-nullable
        <td><code class="highlight"><c- n>T</c-><c- o>&amp;</c-></code>
@@ -2258,12 +2258,11 @@ however, <a data-link-type="biblio" href="#biblio-p2988" title="std::optional<T&
 programmer would simply like to reassign a <code class="highlight"><c- n>T</c-><c- o>&amp;</c-> <c- n>ref</c-></code>, the limitations of references result in either needing to switch to
 a pointer or another wrapper type.</p>
    <p>Pointers work as replacements for references when object-like behavior or reassignability is desirable, however, they
-do not reflect non-nullability in the type system. This has implications with bug-proneness and may also lead to
-unnecessary null checks out of an abundance of caution when non-nullability cannot be readily shown. This can increase
-complexity and clutter code.</p>
-   <p>The desire for a non-nullable reassignable well-behaved reference has led to <code class="highlight"><c- n>reference_wrapper</c-></code> emerging as a standard
-utility to encode the nature of a reference in the type system while enjoying guarantees about non-nullability and the
-ability to use it in containers or similar. For example, a highly upvoted comment on <a href="https://stackoverflow.com/q/26858034/15675011">Why does std::optional not have a specialization for reference types?</a> mentions using <code class="highlight"><c- n>reference_wrapper</c-></code> as a workaround.</p>
+do not reflect non-nullability in the type system. Losing this valuable information in the type system has implications
+with bug-proneness and may also lead to unnecessary null checks out of an abundance of caution in code paths where
+non-nullability cannot be readily shown. This can increase complexity and clutter code.</p>
+   <p>The desire for a non-nullable reassignable well-behaved reference has led to many to reach for <code class="highlight"><c- n>reference_wrapper</c-></code> as a
+standard utility with these semantics. For example, a highly upvoted comment on <a href="https://stackoverflow.com/q/26858034/15675011">Why does std::optional not have a specialization for reference types?</a> mentions using <code class="highlight"><c- n>reference_wrapper</c-></code> as a workaround.</p>
    <p>While <code class="highlight"><c- n>reference_wrapper</c-></code> was initially added for certain metaprogramming uses, it has come to be a fairly wide-spread
 pattern that can be seen in codebases ranging from hobby projects to large and established codebases such as Chromium. A
 cursory GitHub code search for <code class="highlight"><c- n>reference_wrapper</c-></code> in open-source C++ code at the time of writing yields 45k results: <a href="https://github.com/search?type=code&amp;q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
@@ -2284,10 +2283,11 @@ Many of these uses are:</p>
    </ul>
    <p>The first few pages of results suggest these categories account for the vast majority of use of <code class="highlight"><c- n>reference_wrapper</c-></code> in
 open-source C++ code.</p>
-   <p>Due to its semantics and status as an existing practice for this use case, I think it would be preferable to expand the
-intended use-case of <code class="highlight"><c- n>reference_wrapper</c-></code> and improve its ergonomics as opposed to introducing a new vocabulary type.</p>
+   <p>Due to its semantics and status as an existing practice for this use case, it’s fitting to expand the intended use-case
+of <code class="highlight"><c- n>reference_wrapper</c-></code> and improve its ergonomics as a general utility instead of introducing a new vocabulary type for
+this use-case.</p>
    <h2 class="heading settled" data-level="3" id="alternatives"><span class="secno">3. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
-   <p>Alternatives for closing the gap between nullability and reassignability include:</p>
+   <p>Alternatives to <code class="highlight"><c- n>reference_wrapper</c-></code> for this use-case include:</p>
    <ol>
     <li data-md>
      <p>Tell developers to just use pointers</p>
@@ -2303,7 +2303,7 @@ intended use-case of <code class="highlight"><c- n>reference_wrapper</c-></code>
         <tr>
          <th>Nullable
          <td><code class="highlight"><c- n>T</c-><c- o>*</c-> <c- k>const</c-></code>
-         <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>, <code class="highlight"><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;></c-></code>
+         <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>
         <tr>
          <th>Non-nullable
          <td><code class="highlight"><c- n>T</c-><c- o>&amp;</c-></code>
@@ -2318,8 +2318,8 @@ intended use-case of <code class="highlight"><c- n>reference_wrapper</c-></code>
 though, and has constructors taking pointers that are null checked at runtime. <code class="highlight"><c- n>reference_wrapper</c-></code>, on the other hand,
 is designed to model a reference. It’s constructed only by a reference and thus non-nullability is ensured as an
 invariant at the type system level.</p>
-   <p>First-order language support for references that behave like objects and are assignable is a possibility but it would be
-a massive change to the language. Instead, improving <code class="highlight"><c- n>reference_wrapper</c-></code> for this use-case seems preferable.</p>
+   <p>First-order language support for references that behave like objects and are assignable is a possibility, but, it would
+be a massive change to the language. Instead, improving <code class="highlight"><c- n>reference_wrapper</c-></code> for this use-case seems preferable.</p>
    <h2 class="heading settled" data-level="4" id="proposal"><span class="secno">4. </span><span class="content">Proposal</span><a class="self-link" href="#proposal"></a></h2>
    <p>This paper proposes three changes:</p>
    <ol>
@@ -2340,7 +2340,7 @@ like <code class="highlight"><c- n>proxy_holder</c-></code>/<code class="highlig
 types are less so. Fundamentally, the main commonality between all these types isn’t nullability but rather serving as
 proxies to other objects via either wrapping or indirection. As such, <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> is fitting for <code class="highlight"><c- n>reference_wrapper</c-></code>.</p>
    <p>With the expanded use-case for <code class="highlight"><c- n>reference_wrapper</c-></code>, it is better provided through <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> than <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code>. This
-paper adds the utility to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>, following the precedent of <a data-link-type="biblio" href="#biblio-p0472" title="Put std::monostate in <utility>">[P0472]</a> which added <code class="highlight"><c- n>monostate</c-></code> to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>.</p>
+follows the precedent of <a data-link-type="biblio" href="#biblio-p0472" title="Put std::monostate in <utility>">[P0472]</a> which added <code class="highlight"><c- n>monostate</c-></code> to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>.</p>
    <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
    <p>Move [refwrap] and subsections to [utility.refwrap].</p>
@@ -2372,21 +2372,21 @@ paper adds the utility to <code class="highlight"><c- o>&lt;</c-><c- n>utility</
    <p>Add to [utility.syn]:</p>
    <div class="insall">
 <pre class="language-cpp highlight"><c- c1>// [utility.refwrap], reference_wrapper</c->
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>class</c-> <c- nc>reference_wrapper</c-><c- p>;</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>class</c-> <c- nc>reference_wrapper</c-><c- p>;</c->                                        <c- c1>// freestanding</c->
 
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>ref</c-><c- p>(</c-><c- n>T</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>T</c-><c- o>></c-> <c- n>cref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>ref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;&amp;</c-><c- p>)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>;</c->
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>cref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;&amp;</c-><c- p>)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>;</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>ref</c-><c- p>(</c-><c- n>T</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->                <c- c1>// freestanding</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>T</c-><c- o>></c-> <c- n>cref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->   <c- c1>// freestanding</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>ref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;&amp;</c-><c- p>)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>;</c->                                   <c- c1>// freestanding</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>cref</c-><c- p>(</c-><c- k>const</c-> <c- n>T</c-><c- o>&amp;&amp;</c-><c- p>)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>;</c->                                  <c- c1>// freestanding</c->
 
 <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>ref</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
+  <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>ref</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->              <c- c1>// freestanding</c->
 <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>T</c-><c- o>></c-> <c- n>cref</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
+  <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>T</c-><c- o>></c-> <c- n>cref</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->       <c- c1>// freestanding</c->
 
-<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>using</c-> <c- n>reference</c-> <c- o>=</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>;</c->
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>using</c-> <c- n>reference</c-> <c- o>=</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-><c- p>;</c->                         <c- c1>// freestanding</c->
 
-<c- c1>// [refwrap.common.ref], common_reference related specializations</c->
+<c- c1>// [utility.refwrap.common.ref], common_reference related specializations</c->
 <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>R</c-><c- p>,</c-> <c- k>class</c-> <c- nc>T</c-><c- p>,</c-> <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-><c- o>></c-> <c- k>class</c-> <c- nc>RQual</c-><c- p>,</c-> <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-><c- o>></c-> <c- k>class</c-> <c- nc>TQual</c-><c- o>></c->
   <c- k>requires</c-> <c- n>see</c-> <c- n>below</c->
 <c- k>struct</c-> <c- nc>basic_common_reference</c-><c- o>&lt;</c-><c- n>R</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>RQual</c-><c- p>,</c-> <c- n>TQual</c-><c- o>></c-><c- p>;</c->
@@ -2407,26 +2407,26 @@ paper adds the utility to <code class="highlight"><c- o>&lt;</c-><c- n>utility</
     <c- c1>// types</c->
     <c- k>using</c-> <c- n>type</c-> <c- o>=</c-> <c- n>T</c-><c- p>;</c->
 
-    <c- c1>// [refwrap.const], constructors</c->
+    <c- c1>// [utility.refwrap.const], constructors</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>U</c-><c- o>></c->
       <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- p>(</c-><c- n>U</c-><c- o>&amp;&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>(</c-><c- n>see</c-> <c- n>below</c-><c- p>);</c->
     <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- p>(</c-><c- k>const</c-> <c- n>reference_wrapper</c-><c- o>&amp;</c-> <c- n>x</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
 
-    <c- c1>// [refwrap.assign], assignment</c->
+    <c- c1>// [utility.refwrap.assign], assignment</c->
     <c- k>constexpr</c-> <c- n>reference_wrapper</c-><c- o>&amp;</c-> <c- k>operator</c-><c- o>=</c-><c- p>(</c-><c- k>const</c-> <c- n>reference_wrapper</c-><c- o>&amp;</c-> <c- n>x</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
 
-    <c- c1>// [refwrap.access], access</c->
+    <c- c1>// [utility.refwrap.access], access</c->
     <c- k>constexpr</c-> <c- k>operator</c-> <c- n>T</c-><c- o>&amp;</c-> <c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c->
     <c- k>constexpr</c-> <c- n>T</c-><c- o>&amp;</c-> <c- nf>get</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c->
     <ins><c- k>constexpr</c-> <c- n>T</c-><c- o>*</c-> <c- k>operator</c-><c- o>-></c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></ins>
     <ins><c- k>constexpr</c-> <c- n>T</c-><c- o>&amp;</c-> <c- k>operator</c-><c- o>*</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-><c- p>;</c-></ins>
 
-    <c- c1>// [refwrap.invoke], invocation</c->
+    <c- c1>// [utility.refwrap.invoke], invocation</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-><c- p>...</c-> <c- n>ArgTypes</c-><c- o>></c->
       <c- k>constexpr</c-> <c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>ArgTypes</c-><c- p>...</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>ArgTypes</c-><c- o>&amp;&amp;</c-><c- p>...)</c-> <c- k>const</c->
         <c- k>noexcept</c-><c- p>(</c-><c- n>is_nothrow_invocable_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>ArgTypes</c-><c- p>...</c-><c- o>></c-><c- p>);</c->
 
-    <c- c1>// [refwrap.comparisons], comparisons</c->
+    <c- c1>// [utility.refwrap.comparisons], comparisons</c->
     <c- k>friend</c-> <c- k>constexpr</c-> <c- b>bool</c-> <c- k>operator</c-><c- o>==</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- p>,</c-> <c- n>reference_wrapper</c-><c- p>);</c->
     <c- k>friend</c-> <c- k>constexpr</c-> <c- b>bool</c-> <c- k>operator</c-><c- o>==</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- p>,</c-> <c- k>const</c-> <c- n>T</c-><c- o>&amp;</c-><c- p>);</c->
     <c- k>friend</c-> <c- k>constexpr</c-> <c- b>bool</c-> <c- k>operator</c-><c- o>==</c-><c- p>(</c-><c- n>reference_wrapper</c-><c- p>,</c-> <c- n>reference_wrapper</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>T</c-><c- o>></c-><c- p>);</c->
