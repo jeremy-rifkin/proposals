@@ -4,7 +4,7 @@ Group: WG21
 Audience: LEWGI
 Shortname: P3660
 Revision: 0
-Status: D
+Status: P
 Date: 2025-03-12
 Editor: Jeremy Rifkin, jeremy@rifkin.dev
 Abstract: `reference_wrapper` is an existing practice to fill a gap between nullability and reassignability while also providing a well-behaved reference object. This paper proposes a small set of ergonomic improvements.
