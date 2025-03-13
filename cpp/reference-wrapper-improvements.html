@@ -1562,9 +1562,9 @@ Possible extra rowspan handling
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
   <meta content="Bikeshed version 4b8aed3f7, updated Thu Mar 6 12:35:01 2025 -0800" name="generator">
-  <link href="https://isocpp.org/files/papers/P3660R0.html" rel="canonical">
+  <link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="e1240ae5e65305224284e1a7885e531c2f6a3a2f" name="revision">
+  <meta content="9e289a28bc62383c1c7c522acf0b0ce2343b1bd6" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2174,7 +2174,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
-     <dd><a class="u-url" href="https://isocpp.org/files/papers/P3660R0.html">https://isocpp.org/files/papers/P3660R0.html</a>
+     <dd><a class="u-url" href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html</a>
      <dt class="editor">Author:
      <dd class="editor p-author h-card vcard"><a class="p-name fn u-email email" href="mailto:jeremy@rifkin.dev">Jeremy Rifkin</a>
      <dt>Audience:
@@ -2211,10 +2211,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <main>
    <h2 class="heading settled" data-level="1" id="introduction"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
    <p>References in C++ are aliases to objects. They are not guaranteed to occupy storage, cannot be reassigned, and are not
-objects themselves. Pointers, on the other hand, point to objects while being reassignable objects themselves. While
-references and pointers serve much the same purpose, references provide an important guarantee that they will never
-refer to a null object. Thus, there is a gap in core language or library support for representing a non-nullable but
-reassignable:</p>
+objects themselves. Pointers, on the other hand, point to objects while being reassignable objects. While references and
+pointers serve much the same purpose, references provide an important guarantee that they will never refer to a null
+object. Thus, there is a gap in core language and library support for representing non-nullable but reassignable
+indirection type:</p>
    <center>
     <table>
      <tbody>
@@ -2225,7 +2225,7 @@ reassignable:</p>
       <tr>
        <th>Nullable
        <td><code class="highlight"><c- n>T</c-><c- o>*</c-> <c- k>const</c-></code>
-       <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>
+       <td><code class="highlight"><c- n>T</c-><c- o>*</c-></code>, <code class="highlight"><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;></c-></code>
       <tr>
        <th>Non-nullable
        <td><code class="highlight"><c- n>T</c-><c- o>&amp;</c-></code>
@@ -2233,23 +2233,27 @@ reassignable:</p>
     </table>
    </center>
    <p>When faced with a problem where such a non-nullable reassignable reference type would be useful, developers must either
-switch to pointers or use another wrapper type with these properties. <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>reference_wrapper</c-></code> has emerged as an
-existing practice for this use case, however, because it was not designed for this purpose it suffers two notable
-ergonomic issues:</p>
-   <ol>
-    <li data-md>
-     <p><code class="highlight"><c- n>reference_wrapper</c-></code> is a cumbersome name; it both clutters code visually and can be a pain to type</p>
-    <li data-md>
-     <p>In order to access the referenced object developers must either convert to a reference with <code class="highlight"><c- k>operator</c-> <c- n>T</c-><c- o>&amp;</c-></code> or call <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> which makes code quite verbose</p>
-   </ol>
-   <p>This paper proposes a handful of ergonomic improvements so that <code class="highlight"><c- n>reference_wrapper</c-></code> can better close the gap between
-nullability and reassignability.</p>
+switch to pointers or use another wrapper type with these properties. Due to its availability, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>reference_wrapper</c-></code> has emerged as an existing practice for this use case. However, because it was designed for certain metaprogramming uses
+requiring references that behave like regular objects as opposed to serving as a more general utility type it is not
+very ergonomic.</p>
+   <p>Ergonomic limitations of <code class="highlight"><c- n>reference_wrapper</c-></code> have lead some developers to create their own reference wrapper-like types
+that are more ergonomic, in lieu of <code class="highlight"><c- n>reference_wrapper</c-></code>’s shortcomings. For example, Barry Revzin shared on the <code class="highlight"><c- n>std</c-><c- o>-</c-><c- n>proposals</c-></code> mailing list in <a href="https://lists.isocpp.org/std-proposals/2024/09/11280.php">September 2024</a>:</p>
+   <blockquote>
+    <p><i>In reply to a question asking if <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> was not already sufficient:</i></p>
+    <p>For what it’s worth, we have a template that inherits from <code class="highlight"><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> specifically for this reason. After a lot of use, <code class="highlight"><c- n>r</c-><c- p>.</c-><c- n>get</c-><c- p>().</c-><c- n>f</c-><c- p>()</c-></code> is pretty verbose compared to <code class="highlight"><c- n>r</c-><c- o>-></c-><c- n>f</c-><c- p>()</c-></code>.</p>
+    <p>Well that and the name <code class="highlight"><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> is also very verbose so ours is
+just <code class="highlight"><c- n>Ref</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code>.</p>
+   </blockquote>
+   <p>Both the name and constantly having to call <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> results in this utility being quite cumbersome to use. <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code> would be similarly cumbersome if developers had to constantly call <code class="highlight"><c- p>.</c-><c- n>value</c-><c- p>()</c-></code> as opposed to being able
+to use <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> for member access.</p>
+   <p>This paper proposes a small set of ergonomic improvements, transforming the type from a metaprogramming utility to a
+more broadly-applicable vocabulary type that closes the gap between nullability and reassignability.</p>
    <h2 class="heading settled" data-level="2" id="motivation"><span class="secno">2. </span><span class="content">Motivation</span><a class="self-link" href="#motivation"></a></h2>
-   <p>References are often preferred in C++ because they do not require careful thought about nullability, however, there are
+   <p>References are often preferred in C++ because they do not require careful thought about nullability. However, there are
 times when references can’t be used due to not behaving like objects and not being reassignable. For example, it’s
 generally not possible to implement a copy or move assignment operator for a class with non-static reference members and
-an implicitly-declared copy or move assignment operator will be defined as deleted. Additionally, due to not behaving
-like normal objects, all of the following are ill-formed: <code class="highlight"><c- b>int</c-><c- o>&amp;</c-> <c- n>arr</c-><c- p>[</c-><c- mi>2</c-><c- p>]</c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;</c-><c- p>,</c-> <c- mi>2</c-><c- o>></c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;></c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>variant</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;</c-><c- p>,</c-> <c- b>float</c-><c- o>&amp;></c-></code>, and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;></c-></code>. Notably, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;></c-></code> is also ill-formed,
+implicitly-declared copy and move assignment operators are defined as deleted. Additionally, due to not behaving like
+normal objects, all of the following are ill-formed: <code class="highlight"><c- b>int</c-><c- o>&amp;</c-> <c- n>arr</c-><c- p>[</c-><c- mi>2</c-><c- p>]</c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;</c-><c- p>,</c-> <c- mi>2</c-><c- o>></c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;></c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>variant</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;</c-><c- p>,</c-> <c- b>float</c-><c- o>&amp;></c-></code>, and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- b>int</c-><c- o>&amp;></c-></code>. Notably, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>&amp;></c-></code> is also ill-formed,
 however, <a data-link-type="biblio" href="#biblio-p2988" title="std::optional<T&amp;>">[P2988]</a> is on track for acceptance. Whenever any of the aforementioned constructs are desired, or a
 programmer would simply like to reassign a <code class="highlight"><c- n>T</c-><c- o>&amp;</c-> <c- n>ref</c-></code>, the limitations of references result in either needing to switch to
 a pointer or another wrapper type.</p>
@@ -2260,10 +2264,9 @@ complexity and clutter code.</p>
    <p>The desire for a non-nullable reassignable well-behaved reference has led to <code class="highlight"><c- n>reference_wrapper</c-></code> emerging as a standard
 utility to encode the nature of a reference in the type system while enjoying guarantees about non-nullability and the
 ability to use it in containers or similar. For example, a highly upvoted comment on <a href="https://stackoverflow.com/q/26858034/15675011">Why does std::optional not have a specialization for reference types?</a> mentions using <code class="highlight"><c- n>reference_wrapper</c-></code> as a workaround.</p>
-   <p>While <code class="highlight"><c- n>reference_wrapper</c-></code> was initially added for certain metaprogramming uses requiring references that behave like
-regular objects, it has come to be a fairly wide-spread pattern that can be seen in codebases ranging from hobby
-projects to large and established codebases such as Chromium. A cursory GitHub code search for <code class="highlight"><c- n>reference_wrapper</c-></code> in
-open-source C++ code at the time of writing yields 45k results: <a href="https://github.com/search?type=code&amp;q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
+   <p>While <code class="highlight"><c- n>reference_wrapper</c-></code> was initially added for certain metaprogramming uses, it has come to be a fairly wide-spread
+pattern that can be seen in codebases ranging from hobby projects to large and established codebases such as Chromium. A
+cursory GitHub code search for <code class="highlight"><c- n>reference_wrapper</c-></code> in open-source C++ code at the time of writing yields 45k results: <a href="https://github.com/search?type=code&amp;q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
 Many of these uses are:</p>
    <ul>
     <li data-md>
@@ -2277,23 +2280,12 @@ Many of these uses are:</p>
     <li data-md>
      <p>Use in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>variant</c-></code></p>
     <li data-md>
-     <p>Other container uses</p>
+     <p>Use in other containers</p>
    </ul>
    <p>The first few pages of results suggest these categories account for the vast majority of use of <code class="highlight"><c- n>reference_wrapper</c-></code> in
 open-source C++ code.</p>
-   <p>Despite its availability, ergonomic limitations of <code class="highlight"><c- n>reference_wrapper</c-></code> have lead some developers to create their own
-reference wrapper-like types that are more ergonomic, in lieu of <code class="highlight"><c- n>reference_wrapper</c-></code>’s shortcomings. For example, Barry
-Revzin shared on the <code class="highlight"><c- n>std</c-><c- o>-</c-><c- n>proposals</c-></code> mailing list in <a href="https://lists.isocpp.org/std-proposals/2024/09/11280.php">September 2024</a>:</p>
-   <blockquote>
-    <p><i>In reply to a question asking if <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> was not already sufficient:</i></p>
-    <p>For what it’s worth, we have a template that inherits from <code class="highlight"><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> specifically for this reason. After a lot of use, <code class="highlight"><c- n>r</c-><c- p>.</c-><c- n>get</c-><c- p>().</c-><c- n>f</c-><c- p>()</c-></code> is pretty verbose compared to <code class="highlight"><c- n>r</c-><c- o>-></c-><c- n>f</c-><c- p>()</c-></code>.</p>
-    <p>Well that and the name <code class="highlight"><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> is also very verbose so ours is
-just <code class="highlight"><c- n>Ref</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code>.</p>
-   </blockquote>
-   <p>Constantly having to call <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code> ends up being extremely cumbersome. There is a reason why developers typically use <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>>::</c-><c- k>operator</c-><c- o>-></c-></code> as opposed to constantly calling <code class="highlight"><c- p>.</c-><c- n>value</c-><c- p>()</c-></code>: It quickly becomes cumbersome. This issue is
-easily resolved, as is the issue of a long name, as Barry illustrated. Improving ergonomics for <code class="highlight"><c- n>reference_wrapper</c-></code> in
-the standard library would better allow it to be used by developers for closing the semantic gap between nullability and
-reassignability.</p>
+   <p>Due to its semantics and status as an existing practice for this use case, I think it would be preferable to expand the
+intended use-case of <code class="highlight"><c- n>reference_wrapper</c-></code> and improve its ergonomics as opposed to introducing a new vocabulary type.</p>
    <h2 class="heading settled" data-level="3" id="alternatives"><span class="secno">3. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
    <p>Alternatives for closing the gap between nullability and reassignability include:</p>
    <ol>
@@ -2325,8 +2317,8 @@ reassignability.</p>
    <p>There is prior art for <code class="highlight"><c- n>not_null</c-></code> in the form of <code class="highlight"><c- n>gsl</c-><c- o>::</c-><c- n>not_null</c-></code>. This wrapper type fundamentally mimics a pointer,
 though, and has constructors taking pointers that are null checked at runtime. <code class="highlight"><c- n>reference_wrapper</c-></code>, on the other hand,
 is designed to model a reference. It’s constructed only by a reference and thus non-nullability is ensured as an
-invariant.</p>
-   <p>First order language support for references that behave like objects and are assignable is a possibility but it would be
+invariant at the type system level.</p>
+   <p>First-order language support for references that behave like objects and are assignable is a possibility but it would be
 a massive change to the language. Instead, improving <code class="highlight"><c- n>reference_wrapper</c-></code> for this use-case seems preferable.</p>
    <h2 class="heading settled" data-level="4" id="proposal"><span class="secno">4. </span><span class="content">Proposal</span><a class="self-link" href="#proposal"></a></h2>
    <p>This paper proposes three changes:</p>
@@ -2336,16 +2328,19 @@ a massive change to the language. Instead, improving <code class="highlight"><c-
     <li data-md>
      <p>Add an <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> overload for forwarding member access as well as an <code class="highlight"><c- k>operator</c-><c- o>*</c-></code> overload for symmetry</p>
     <li data-md>
-     <p>Provide <code class="highlight"><c- n>reference_wrapper</c-></code> and this alias through the <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> header</p>
+     <p>Provide <code class="highlight"><c- n>reference_wrapper</c-></code> and the <code class="highlight"><c- n>reference</c-></code> alias through the <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> header</p>
    </ol>
    <p><code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>reference</c-></code> is chosen as a shorter alias for <code class="highlight"><c- n>reference_wrapper</c-></code> due to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ref</c-></code> already being used.</p>
-   <p>While <code class="highlight"><c- o>-></c-></code> is typically associated with pointers and pointer-like types, we can’t overload <code class="highlight"><c- k>operator</c-><c- p>.</c-></code> in C++
-so <code class="highlight"><c- o>-></c-></code> is often used in its place, e.g. by <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code>. <code class="highlight"><c- k>operator</c-><c- o>*</c-></code> is provided for symmetry and it serves as a
-shorthand for <code class="highlight"><c- p>.</c-><c- n>get</c-><c- p>()</c-></code>, similar to <code class="highlight"><c- n>optional</c-><c- o>&lt;</c-><c- n>T</c-><c- o>>::</c-><c- k>operator</c-><c- o>*</c-></code> being a shorthand for <code class="highlight"><c- p>.</c-><c- n>value</c-><c- p>()</c-></code>. Expanding the forwarding
-operators for <code class="highlight"><c- n>reference_wrapper</c-></code> also follows the precedent of <a data-link-type="biblio" href="#biblio-p2944" title="Comparisons for reference_wrapper">[P2944]</a> which added forwarding comparison operators to <code class="highlight"><c- n>reference_wrapper</c-></code>.</p>
-   <p>With the expanded use-case for <code class="highlight"><c- n>reference_wrapper</c-></code> it is better provided through <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> than <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code>. This
-paper adds the utility to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>, following the precedent of <a data-link-type="biblio" href="#biblio-p0472" title="Put std::monostate in <utility>">[P0472]</a> (which adds <code class="highlight"><c- n>monostate</c-></code> to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> for
-C++26).</p>
+   <p>Expanding the forwarding operations for <code class="highlight"><c- n>reference_wrapper</c-></code> follows the precedent of <a data-link-type="biblio" href="#biblio-p2944" title="Comparisons for reference_wrapper">[P2944]</a>, which added forwarding
+comparison operators to <code class="highlight"><c- n>reference_wrapper</c-></code>. While <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> is typically associated with pointers and pointer-like
+types (such as iterators or smart pointers), it is the only option for member access forwarding in lieu of <code class="highlight"><c- k>operator</c-><c- p>.</c-></code>.
+This use of <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> isn’t without precedent and it isn’t uncommon even for types that aren’t pointer-like. For
+example, all of the following have <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> overloads for convenience: <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>expected</c-></code>, or types
+like <code class="highlight"><c- n>proxy_holder</c-></code>/<code class="highlight"><c- n>arrow_proxy</c-></code> (<a href="https://stackoverflow.com/a/26496041/15675011">stackoverflow</a>) or <code class="highlight"><c- n>pilfered</c-></code> (<a href="https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp">boost json</a>, <a data-link-type="biblio" href="#biblio-p0308" title="Valueless Variants Considered Harmful">[P0308]</a>). <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code> is arguably similar to a pointer in that is nullable, however, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>expected</c-></code> and the proxy / wrapper
+types are less so. Fundamentally, the main commonality between all these types isn’t nullability but rather serving as
+proxies to other objects via either wrapping or indirection. As such, <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> is fitting for <code class="highlight"><c- n>reference_wrapper</c-></code>.</p>
+   <p>With the expanded use-case for <code class="highlight"><c- n>reference_wrapper</c-></code>, it is better provided through <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> than <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code>. This
+paper adds the utility to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>, following the precedent of <a data-link-type="biblio" href="#biblio-p0472" title="Put std::monostate in <utility>">[P0472]</a> which added <code class="highlight"><c- n>monostate</c-></code> to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>.</p>
    <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
    <p>Move [refwrap] and subsections to [utility.refwrap].</p>
@@ -2403,7 +2398,7 @@ C++26).</p>
    </div>
    <p>Add a paragraph at the end of [functional.syn]:</p>
    <blockquote>
-    <ins> The class templates, function templates, and alias templates defined in [utility.refwrap] are available when <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code> is included. </ins>
+    <ins> The class templates, function templates, and alias template defined in [utility.refwrap] are available when <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code> is included. </ins>
    </blockquote>
    <p>Add to [utility.refwrap.general]:</p>
 <pre class="highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
@@ -2590,8 +2585,10 @@ C++26).</p>
   </dl>
   <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
+   <dt id="biblio-p0308">[P0308]
+   <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0308r0.html"><cite>Valueless Variants Considered Harmful</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0308r0.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0308r0.html</a>
    <dt id="biblio-p0472">[P0472]
-   <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r2.pdf"><cite>Put std::monostate in &lt;utility></cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r2.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r2.pdf</a>
+   <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r3.pdf"><cite>Put std::monostate in &lt;utility></cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r3.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0472r3.pdf</a>
    <dt id="biblio-p2944">[P2944]
    <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2944r3.html"><cite>Comparisons for reference_wrapper</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2944r3.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2944r3.html</a>
    <dt id="biblio-p2988">[P2988]
