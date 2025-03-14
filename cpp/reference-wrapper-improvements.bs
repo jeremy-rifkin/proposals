@@ -189,9 +189,10 @@ This use of `operator->` isn't without precedent and it isn't uncommon even for 
 example, all of the following have `operator->` overloads for convenience: `std::optional`, `std::expected`, or types
 like `proxy_holder`/`arrow_proxy` ([stackoverflow](https://stackoverflow.com/a/26496041/15675011)) or `pilfered`
 ([boost json](https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp), [[P0308]]).
-`std::optional` is arguably similar to a pointer in that is nullable, however, `std::expected` and the proxy / wrapper
-types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather serving as
-proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for `reference_wrapper`.
+`std::optional` is arguably similar to a pointer in that it is nullable, however, `std::expected` and the proxy /
+wrapper types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather
+serving as proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for
+`reference_wrapper`.
 
 With the expanded use-case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
 follows the precedent of [[P0472]] which added `monostate` to `<utility>`.
