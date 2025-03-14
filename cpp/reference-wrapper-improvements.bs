@@ -70,12 +70,12 @@ indirection:
 When faced with a problem where such a non-nullable reassignable reference type would be useful, developers must either
 switch to pointers or use another wrapper type with these properties. Due to its availability, `std::reference_wrapper`
 has emerged as an existing practice for this use case. However, because it was designed for certain metaprogramming uses
-requiring references that behave like regular objects as opposed to serving as a more general utility type it is not
+requiring references that behave like regular objects as opposed to serving as a more general utility type, it is not
 very ergonomic. The two most notable shortcomings are that the name is long and cumbersome and the only ways to access
 the referenced object are a conversion operator or `.get()` instead of a forwarding member access operator.
 
-Ergonomic limitations of `reference_wrapper` have lead some developers to create their own reference wrapper-like types
-that are more ergonomic, in lieu of `reference_wrapper`'s shortcomings. For example, Barry Revzin shared on the
+Ergonomic limitations of `reference_wrapper` have led some developers to create their own reference wrapper-like types
+that are more ergonomic in lieu of `reference_wrapper`'s shortcomings. For example, Barry Revzin shared on the
 `std-proposals` mailing list in [September 2024](https://lists.isocpp.org/std-proposals/2024/09/11280.php):
 
 > <i>In reply to a question asking if `.get()` was not already sufficient:</i>
@@ -92,7 +92,7 @@ Both the name and constantly having to call `.get()` results in this utility bei
 to use `operator->` for member access.
 
 This paper proposes a small set of ergonomic improvements to address these limitations and transform the type from a
-metaprogramming utility to a more broadly-applicable vocabulary type that closes the gap between nullability and
+metaprogramming utility to a more broadly applicable vocabulary type that closes the gap between nullability and
 reassignability.
 
 # Motivation
@@ -107,17 +107,17 @@ however, [[P2988]] is on track for acceptance. Whenever any of the aforementione
 programmer would simply like to reassign a `T& ref`, the limitations of references result in either needing to switch to
 a pointer or another wrapper type.
 
-Pointers work as replacements for references when object-like behavior or reassignability is desirable, however, they
+Pointers work as replacements for references when object-like behavior or reassignability is desirable. However, they
 do not reflect non-nullability in the type system. Losing this valuable information in the type system has implications
 with bug-proneness and may also lead to unnecessary null checks out of an abundance of caution in code paths where
 non-nullability cannot be readily shown. This can increase complexity and clutter code.
 
-The desire for a non-nullable reassignable well-behaved reference has led to many to reach for `reference_wrapper` as a
+The desire for a non-nullable, reassignable, well-behaved reference has led many to reach for `reference_wrapper` as a
 standard utility with these semantics. For example, a highly upvoted comment on
 [Why does std::optional not have a specialization for reference types?](https://stackoverflow.com/q/26858034/15675011)
 mentions using `reference_wrapper` as a workaround.
 
-While `reference_wrapper` was initially added for certain metaprogramming uses, it has come to be a fairly wide-spread
+While `reference_wrapper` was initially added for certain metaprogramming uses, it has become a fairly widespread
 pattern that can be seen in codebases ranging from hobby projects to large and established codebases such as Chromium. A
 cursory GitHub code search for `reference_wrapper` in open-source C++ code at the time of writing yields 45k results:
 <a href="https://github.com/search?type=code&q=%2Fstd%3A%3Areference_wrapper%2F+-is%3Afork+language%3Ac%2B%2B">Code Search</a>.
@@ -132,13 +132,13 @@ Many of these uses are:
 The first few pages of results suggest these categories account for the vast majority of use of `reference_wrapper` in
 open-source C++ code.
 
-Due to its semantics and status as an existing practice for this use case, it's fitting to expand the intended use-case
+Due to its semantics and status as an existing practice for this use case, it's fitting to expand the intended use case
 of `reference_wrapper` and improve its ergonomics as a general utility instead of introducing a new vocabulary type for
-this use-case.
+this use case.
 
 # Alternatives
 
-Alternatives to `reference_wrapper` for this use-case include:
+Alternatives to `reference_wrapper` for this use case include:
 
 1. Tell developers to just use pointers
 2. Add a `std::not_null` pointer wrapper to fill the gap instead
@@ -166,12 +166,12 @@ Alternatives to `reference_wrapper` for this use-case include:
 Pointers are undesirable for reasons mentioned earlier.
 
 There is prior art for `not_null` in the form of `gsl::not_null`. This wrapper type fundamentally mimics a pointer,
-though, and has constructors taking pointers that are null checked at runtime. `reference_wrapper`, on the other hand,
-is designed to model a reference. It's constructed only by a reference and thus non-nullability is ensured as an
+though, and has constructors taking pointers that are null-checked at runtime. `reference_wrapper`, on the other hand,
+is designed to model a reference: It's constructed only by a reference, and thus, non-nullability is ensured as an
 invariant at the type system level.
 
 First-order language support for references that behave like objects and are assignable is a possibility, but, it would
-be a massive change to the language. Instead, improving `reference_wrapper` for this use-case seems preferable.
+be a massive change to the language. Instead, improving `reference_wrapper` for this use case seems preferable.
 
 # Proposal
 
@@ -185,17 +185,16 @@ This paper proposes three changes:
 Expanding the forwarding operations for `reference_wrapper` follows the precedent of [[P2944]], which added forwarding
 comparison operators to `reference_wrapper`. While `operator->` is typically associated with pointers and pointer-like
 types (such as iterators or smart pointers), it is the only option for member access forwarding in lieu of `operator.`.
-This use of `operator->` isn't without precedent and it isn't uncommon even for types that aren't pointer-like. For
+This use of `operator->` isn't without precedent, and it isn't uncommon even for types that aren't pointer-like. For
 example, all of the following have `operator->` overloads for convenience: `std::optional`, `std::expected`, or types
 like `proxy_holder`/`arrow_proxy` ([stackoverflow](https://stackoverflow.com/a/26496041/15675011)) or `pilfered`
 ([boost json](https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp), [[P0308]]).
-`std::optional` is arguably similar to a pointer in that it is nullable, however, `std::expected` and the proxy /
-wrapper types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather
-serving as proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for
-`reference_wrapper`.
+`std::optional` is arguably similar to a pointer in that it is nullable; however, `std::expected` and the proxy/wrapper
+types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather serving as
+proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for `reference_wrapper`.
 
-With the expanded use-case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
-follows the precedent of [[P0472]] which added `monostate` to `<utility>`.
+With the expanded use case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
+follows the precedent of [[P0472]], which added `monostate` to `<utility>`.
 
 # Proposed Wording
 
