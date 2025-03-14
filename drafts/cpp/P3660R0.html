@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 6270e4735, updated Tue Aug 6 12:12:30 2024 -0700" name="generator">
   <link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3660r0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="3f2b716d4b899df99e70808c386f838f37b23f47" name="revision">
+  <meta content="de13e4c13600858bcb06b7a6536050d8223c9654" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2338,9 +2338,9 @@ comparison operators to <code class="highlight"><c- n>reference_wrapper</c-></co
 types (such as iterators or smart pointers), it is the only option for member access forwarding in lieu of <code class="highlight"><c- k>operator</c-><c- p>.</c-></code>.
 This use of <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> isn’t without precedent and it isn’t uncommon even for types that aren’t pointer-like. For
 example, all of the following have <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> overloads for convenience: <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code>, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>expected</c-></code>, or types
-like <code class="highlight"><c- n>proxy_holder</c-></code>/<code class="highlight"><c- n>arrow_proxy</c-></code> (<a href="https://stackoverflow.com/a/26496041/15675011">stackoverflow</a>) or <code class="highlight"><c- n>pilfered</c-></code> (<a href="https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp">boost json</a>, <a data-link-type="biblio" href="#biblio-p0308" title="Valueless Variants Considered Harmful">[P0308]</a>). <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code> is arguably similar to a pointer in that is nullable, however, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>expected</c-></code> and the proxy / wrapper
-types are less so. Fundamentally, the main commonality between all these types isn’t nullability but rather serving as
-proxies to other objects via either wrapping or indirection. As such, <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> is fitting for <code class="highlight"><c- n>reference_wrapper</c-></code>.</p>
+like <code class="highlight"><c- n>proxy_holder</c-></code>/<code class="highlight"><c- n>arrow_proxy</c-></code> (<a href="https://stackoverflow.com/a/26496041/15675011">stackoverflow</a>) or <code class="highlight"><c- n>pilfered</c-></code> (<a href="https://github.com/boostorg/json/blob/0b1048adf7571b42ae9f684b63e4383241b9e4a1/include/boost/json/pilfer.hpp">boost json</a>, <a data-link-type="biblio" href="#biblio-p0308" title="Valueless Variants Considered Harmful">[P0308]</a>). <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-></code> is arguably similar to a pointer in that it is nullable, however, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>expected</c-></code> and the proxy /
+wrapper types are less so. Fundamentally, the main commonality between all these types isn’t nullability but rather
+serving as proxies to other objects via either wrapping or indirection. As such, <code class="highlight"><c- k>operator</c-><c- o>-></c-></code> is fitting for <code class="highlight"><c- n>reference_wrapper</c-></code>.</p>
    <p>With the expanded use-case for <code class="highlight"><c- n>reference_wrapper</c-></code>, it is better provided through <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code> than <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code>. This
 follows the precedent of <a data-link-type="biblio" href="#biblio-p0472" title="Put std::monostate in <utility>">[P0472]</a> which added <code class="highlight"><c- n>monostate</c-></code> to <code class="highlight"><c- o>&lt;</c-><c- n>utility</c-><c- o>></c-></code>.</p>
    <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
