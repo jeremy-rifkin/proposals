@@ -1,0 +1,306 @@
+<pre class='metadata'>
+Title: Improve Increment and Decrement Operator Expressiveness
+Group: WG21
+Audience: EWGI
+Shortname: P3662
+Revision: 0
+Status: D
+Date: 2025-03-14
+Editor: Jeremy Rifkin, jeremy@rifkin.dev
+Abstract: C++ differentiates prefix and postfix increment and decrement operator overloads with an `int` parameter or lack thereof. This syntax is subtle, not expressive, and not intuitive. This is a short paper on pursuing a more expressive syntax.
+Markup Shorthands: markdown on
+ED: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3662r0.html
+!Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/increment-decrement.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/increment-decrement.bs)
+</pre>
+
+<style>
+table, th, td {
+    border: none;
+}
+th, td {
+    padding: 5px 10px;
+}
+th {
+    vertical-align: middle;
+}
+thead {
+    border-bottom: 2px solid black;
+}
+tbody tr:nth-child(even) {
+    background: #eee;
+}
+@media (prefers-color-scheme: dark) {
+    thead {
+        border-bottom: 2px solid white;
+    }
+    tbody tr:nth-child(even) {
+        background: #111;
+    }
+}
+</style>
+
+# Introduction
+
+C++ allows overloading the prefix and postfix `++` and `--` operators with the following syntax:
+
+```cpp
+struct S {
+  auto operator++()    { ... } // ++s
+  auto operator++(int) { ... } // s++
+  auto operator--()    { ... } // --s
+  auto operator--(int) { ... } // s--
+};
+```
+
+Originally, C++ only had `operator++()` and `operator--()`, which were used for both prefix and postfix variations.
+Postfix-specific overloads were added later. According to [[DNE inline]] 11.5.3, a driving motivator for the selected
+syntax was to find a "minimal change to express the prefix/postfix distinction." To further quote Stroustrup:
+
+<blockquote>
+
+I considered the obvious solution, adding the keywords `prefix` and `postfix` to
+C++:
+```cpp
+class Ptr_to_X {
+  // ...
+  X operator prefix++();   // prefix ++
+  X& operator postfix++(); // postfix ++
+};
+```
+or
+```cpp
+class Ptr_to_X {
+  // ...
+  X prefix operator++();   // prefix ++
+  X& postfix operator++(); // postfix ++
+};
+```
+However, I received the usual howl of outrage from people who dislike new keywords.
+Several alternatives that did not involve new keywords were suggested. For
+example:
+```cpp
+class Ptr_to_X {
+  // ...
+  X ++operator();  // prefix ++
+  X& operator++(); // postfix ++
+};
+```
+or
+```cpp
+class Ptr_to_X {
+  // ...
+  X& operator++(); // postfix because it
+                   // returns a reference
+  X operator++();  // prefix because it
+                   // doesn't return a reference
+};
+```
+I considered the former too cute and the latter too subtle. Finally, I settled on:
+```cpp
+class Ptr_to_X {
+  // ...
+  X operator++();     // prefix: no argument
+  X& operator++(int); // postfix: because of
+                      // the argument
+};
+```
+This may be both too cute and too subtle, but it works, requires no new syntax, and
+has a logic to the madness. Other unary operators are prefix and take no arguments
+when defined as member functions. The "odd" and unused dummy `int` argument is
+used to indicate the odd postfix operators. ...
+
+</blockquote>
+
+The syntax, while pragmatic at the time and does in fact work, is certainly subtle and unintuitive. A much different
+different route would no doubt have been taken today if the decision were being made now. Even at the time of writing
+[[DNE]], Stroustrup described it as "a bit of a wart."
+
+Today, the syntax is a very notable wart especially in light of syntax improvements and pushes for more modern syntax in
+the language. Additionally, we now have tools for this such as contextual keywords which didn't exist when this syntax was
+chosen for differentiating prefix/postfix overloads and alleviate concerns about adding additional keywords.
+
+To put the scale of this topic into perspective: According to GitHub code search, `operator++` appears about
+<a href="https://github.com/search?type=code&q=%2Foperator%5Cs*%5C%2B%5C%2B%2F+language%3AC%2B%2B+-is%3Afork">416k times</a>
+in open source C++ code at the time of writing. This is the same order of magnitude as `std::runtime_error`, which
+appears about
+<a href="https://github.com/search?type=code&q=%2Fstd%3A%3Aruntime_error%2F+language%3AC%2B%2B+-is%3Afork">647k times</a>
+at the time of writing.
+
+While overloading increment and decrement operators is not super common, with iterator implementations likely being the
+predominant use, this is none the less worth solving and doing so would significantly improve the expressiveness,
+intuitiveness, readability, and teachability of these overloads.
+
+# Proposal
+
+This paper proposes the following syntax with contextual keywords:
+
+```cpp
+struct S {
+  auto operator++ prefix()  { ... } // ++s
+  auto operator++ postfix() { ... } // s++
+};
+```
+
+Due to ABI, these would not be new signatures, but rather, they would be syntax sugar for the existing overload
+signatures:
+
+<center>
+  <table>
+    <tr>
+      <th>New syntax</th>
+      <th>Same as</th>
+    </tr>
+    <tr>
+      <td>`operator++ prefix()`</td>
+      <td>`operator++()`</td>
+    </tr>
+    <tr>
+      <td>`operator++ postfix()`</td>
+      <td>`operator++(int)`</td>
+    </tr>
+  </table>
+</center>
+
+In addition to usage as `++s` and `s++`, it could be used as follows:
+
+```cpp
+S s;
+s.operator++ prefix();
+s.operator++ postfix();
+// expands to:
+// s.operator++();
+// s.operator++(0);
+```
+
+This greatly improves the clarity of these operator overloads.
+
+One shortcoming of this approach, however, is that the wart of the underlying signature would still manifest when
+working with member function pointers:
+
+```cpp
+auto(S::* pre)() = &S::operator++;
+auto(S::* post)(int) = &S::operator++;
+```
+
+This is unfortunate. However, making member function pointers to increment/decrement operator overloads is likely rare.
+This could be partially alleviated by:
+
+```cpp
+auto pre = &S::operator++ prefix;
+auto post = &S::operator++ postfix;
+// works as if by:
+// auto(S::* tmp1)() = &S::operator++;
+// auto pre = tmp1;
+// auto(S::* tmp2)(int) = &S::operator++;
+// auto pre = tmp2;
+```
+
+However, it would still require passing the extra `int` parameter when using the postfix member function pointer.
+
+# Alternatives
+
+In a discussion on the #include&lt;c++&gt; discord, Janet Cobb suggested the following utility and workaround:
+
+```cpp
+namespace std {
+  using prefix = void;
+  using postfix = int;
+}
+
+struct S {
+  auto operator++(std::prefix)  { ... } // ++s
+  auto operator++(std::postfix) { ... } // s++
+};
+```
+
+While this is only a facade over the problem (not entirely dissimilar to the proposed change, which is merely syntactic
+sugar), it would be a very low-complexity library change that would greatly improve the status quo without adding
+language complexity. It could be used as follows:
+
+```cpp
+S s;
+++s;
+s++;
+s.operator++();
+s.operator++(std::postfix());
+auto(S::* pre)(std::prefix) = &S::operator++;
+auto(S::* post)(std::postfix) = &S::operator++;
+```
+
+Unfortunately, `s.operator++(std::prefix());` would be an invalid use of a void expression, and similar to the proposed
+solution, an extra int parameter would have to be passed when using the postfix member function pointer.
+
+# Questions for EWGI
+
+1. Would this be better solved as a core change or library change?
+
+# Proposed Wording
+
+<style>
+.mono {
+  font-family: Menlo, Consolas, "DejaVu Sans Mono", Monaco, monospace;
+}
+h3.mono {
+  font-size: 20px;
+}
+div.insall {
+  background: #cfc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.delall {
+  background: #fcc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.insall h3, div.insall h4,
+div.delall h3, div.delall h4 {
+  color: #000 !important;
+}
+div.insall pre {
+  border: 10px solid #cfc !important;
+  /* background: #0d0d0d !important; */
+}
+div.delall pre {
+  border: 10px solid #fcc !important;
+  /* background: #0d0d0d !important; */
+}
+@media (prefers-color-scheme: dark) {
+  div.insall {
+    background: #cfc !important;
+    color: #000 !important;
+  }
+  div.delall {
+    background: #fcc !important;
+    color: #000 !important;
+    padding: 5px;
+  }
+  div.insall h3, div.insall h4,
+  div.delall h3, div.delall h4 {
+    color: #000 !important;
+  }
+  div.insall pre {
+    border: 10px solid #cfc !important;
+    background: rgb(13, 13, 13) !important;
+  }
+  div.delall pre {
+    border: 10px solid #fcc !important;
+    background: rgb(13, 13, 13) !important;
+  }
+}
+.indent {
+  padding-left: 20px;
+}
+</style>
+
+Wording pending guidance and interest.
+
+<pre class="biblio">
+{
+    "DNE": {
+        "title": "The Design and Evolution of C++",
+        "href": "https://www.stroustrup.com/dne.html",
+        "authors": ["Bjarne Stroustrup"]
+    }
+}
+</pre>
