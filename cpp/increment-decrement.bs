@@ -1,10 +1,10 @@
 <pre class='metadata'>
-Title: Improve Increment and Decrement Operator Expressiveness
+Title: Improve Increment and Decrement Operator Syntax
 Group: WG21
 Audience: EWGI
 Shortname: P3662
 Revision: 0
-Status: D
+Status: P
 Date: 2025-03-14
 Editor: Jeremy Rifkin, jeremy@rifkin.dev
 Abstract: C++ differentiates prefix and postfix increment and decrement operator overloads with an `int` parameter or lack thereof. This syntax is subtle, not expressive, and not intuitive. This is a short paper on pursuing a more expressive syntax.
@@ -51,6 +51,34 @@ struct S {
   auto operator--(int) { ... } // s--
 };
 ```
+
+This syntax is a vestige of a historical design decision that, while pragmatic at the time, isn't good language design
+by today's standard (and wasn't then either). It presents three main problems:
+- It's subtle
+- It's not expressive
+- It's not intuitive
+- It's not conducive to education
+
+The current syntax was chosen for two main reasons: It was a minimal change to the language and it didn't add new
+keywords. Today, tools such as contextual keywords allow us to solve this problem better.
+
+Overloading increment and decrement operators is not super common: Plenty of C++ programs are written without ever
+overloading these operators, with their predominant use being iterator implementations. However, it's also not an
+uncommon syntax to need to use. To put the scale of this topic into perspective: According to GitHub code search,
+`operator++` appears about
+[416k times](https://github.com/search?type=code&q=%2Foperator%5Cs*%5C%2B%5C%2B%2F+language%3AC%2B%2B+-is%3Afork)
+in open source C++ code at the time of writing. This is the same order of magnitude as `std::runtime_error`, which
+appears about
+[647k times](https://github.com/search?type=code&q=%2Fstd%3A%3Aruntime_error%2F+language%3AC%2B%2B+-is%3Afork)
+at the time of writing.
+
+While this isn't a *massive* problem &mdash; it's not an everyday language functionality and certainly developers are
+able to memorize which one is which or look up the syntax &mdash; developers should not have to use memorization tricks
+in order to overload these operators or remember what the syntax means when reading code. Today, we can and should do
+better. Providing a modern syntax for these operators would significantly improve the expressiveness, intuitiveness,
+readability, and teachability of code using these overloads and would correct a historical wart of the language.
+
+# History
 
 Originally, C++ only had `operator++()` and `operator--()`, which were used for both prefix and postfix variations.
 Postfix-specific overloads were added later. According to [[DNE inline]] 11.5.3, a driving motivator for the selected
@@ -111,24 +139,12 @@ used to indicate the odd postfix operators. ...
 
 </blockquote>
 
-The syntax, while pragmatic at the time and does in fact work, is certainly subtle and unintuitive. A much different
-different route would no doubt have been taken today if the decision were being made now. Even at the time of writing
-[[DNE]], Stroustrup described it as "a bit of a wart."
+The syntax, while pragmatic at the time and while it does get the job done, is certainly subtle and unintuitive. Even at
+the time of writing [[DNE]], Stroustrup described it as "a bit of a wart."
 
-Today, the syntax is a very notable wart especially in light of syntax improvements and pushes for more modern syntax in
-the language. Additionally, we now have tools for this such as contextual keywords which didn't exist when this syntax was
-chosen for differentiating prefix/postfix overloads and alleviate concerns about adding additional keywords.
-
-To put the scale of this topic into perspective: According to GitHub code search, `operator++` appears about
-<a href="https://github.com/search?type=code&q=%2Foperator%5Cs*%5C%2B%5C%2B%2F+language%3AC%2B%2B+-is%3Afork">416k times</a>
-in open source C++ code at the time of writing. This is the same order of magnitude as `std::runtime_error`, which
-appears about
-<a href="https://github.com/search?type=code&q=%2Fstd%3A%3Aruntime_error%2F+language%3AC%2B%2B+-is%3Afork">647k times</a>
-at the time of writing.
-
-While overloading increment and decrement operators is not super common, with iterator implementations likely being the
-predominant use, this is none the less worth solving and doing so would significantly improve the expressiveness,
-intuitiveness, readability, and teachability of these overloads.
+Today, this syntax is a very notable wart, especially in light of syntax improvements and pushes for more modern syntax
+in the language. Today, a much different design decision would likely have been made, especially given tools like
+contextual keywords, which didn't exist at the time.
 
 # Proposal
 
@@ -140,6 +156,8 @@ struct S {
   auto operator++ postfix() { ... } // s++
 };
 ```
+
+This greatly improves the clarity of code using these operator overloads.
 
 Due to ABI, these would not be new signatures, but rather, they would be syntax sugar for the existing overload
 signatures:
@@ -172,18 +190,18 @@ s.operator++ postfix();
 // s.operator++(0);
 ```
 
-This greatly improves the clarity of these operator overloads.
-
-One shortcoming of this approach, however, is that the wart of the underlying signature would still manifest when
-working with member function pointers:
+One shortcoming of this approach, however, is that the underlying signature would still manifest when working with
+member function pointers:
 
 ```cpp
 auto(S::* pre)() = &S::operator++;
 auto(S::* post)(int) = &S::operator++;
 ```
 
-This is unfortunate. However, making member function pointers to increment/decrement operator overloads is likely rare.
-This could be partially alleviated by:
+Passing an extra `int` parameter would also be required when using the postfix member function pointer.
+
+While it is unfortunate that the wart could still manifest, making member function pointers to increment/decrement
+operator overloads is likely rare. This could be partially alleviated by:
 
 ```cpp
 auto pre = &S::operator++ prefix;
@@ -194,8 +212,6 @@ auto post = &S::operator++ postfix;
 // auto(S::* tmp2)(int) = &S::operator++;
 // auto pre = tmp2;
 ```
-
-However, it would still require passing the extra `int` parameter when using the postfix member function pointer.
 
 # Alternatives
 
@@ -232,7 +248,7 @@ solution, an extra int parameter would have to be passed when using the postfix 
 
 # Questions for EWGI
 
-1. Would this be better solved as a core change or library change?
+1. Would this be better solved as a core change or a library change?
 
 # Proposed Wording
 
