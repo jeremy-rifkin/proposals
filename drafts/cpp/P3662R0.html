@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version b25686b9f, updated Fri Mar 14 14:15:20 2025 -0700" name="generator">
   <link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3662r0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="46faab7d2e0a0b81bd23417c9a86e39ff9f99c2c" name="revision">
+  <meta content="02b9c5ec8bf08c7bd08b95bb67314a60e3200bbb" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2236,11 +2236,11 @@ keywords. Today, tools such as contextual keywords allow us to solve this proble
 overloading these operators, with their predominant use being iterator implementations. However, it’s also not an
 uncommon syntax to need to use. To put the scale of this topic into perspective: According to GitHub code search, <code class="highlight"><c- k>operator</c-><c- o>++</c-></code> appears about <a href="https://github.com/search?type=code&amp;q=%2Foperator%5Cs*%5C%2B%5C%2B%2F+language%3AC%2B%2B+-is%3Afork">416k times</a> in open source C++ code at the time of writing. This is the same order of magnitude as <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>runtime_error</c-></code>, which
 appears about <a href="https://github.com/search?type=code&amp;q=%2Fstd%3A%3Aruntime_error%2F+language%3AC%2B%2B+-is%3Afork">647k times</a> at the time of writing.</p>
-   <p>While this isn’t a <em>massive</em> problem — it’s not an everyday language functionality and certainly developers are
-able to memorize which one is which or look up the syntax — developers should not have to use memorization tricks
-in order to overload these operators or remember what the syntax means when reading code. Today, we can and should do
-better. Providing a modern syntax for these operators would significantly improve the expressiveness, intuitiveness,
-readability, and teachability of code using these overloads and would correct a historical wart of the language.</p>
+   <p>While this isn’t a problem most developers run into daily, and certainly developers are able to memorize which signature
+is which or look up the syntax, developers should not have to use memorization tricks in order to overload these
+operators or remember what the syntax means when reading code. Today, we can do better. This paper proposes a modern
+syntax for these operators, which significantly improves the expressiveness, intuitiveness, readability, and
+teachability of code using these overloads and largely corrects a historical wart of the language.</p>
    <h2 class="heading settled" data-level="2" id="history"><span class="secno">2. </span><span class="content">History</span><a class="self-link" href="#history"></a></h2>
    <p>Originally, C++ only had <code class="highlight"><c- k>operator</c-><c- o>++</c-><c- p>()</c-></code> and <code class="highlight"><c- k>operator</c-><c- o>--</c-><c- p>()</c-></code>, which were used for both prefix and postfix variations.
 Postfix-specific overloads were added later. According to <a data-biblio-display="inline" data-link-type="biblio" href="https://www.stroustrup.com/dne.html"><cite>The Design and Evolution of C++</cite></a> 11.5.3, a driving motivator for the selected
@@ -2292,8 +2292,8 @@ has a logic to the madness. Other unary operators are prefix and take no argumen
 when defined as member functions. The "odd" and unused dummy <code class="highlight"><c- b>int</c-></code> argument is
 used to indicate the odd postfix operators. ...</p>
    </blockquote>
-   <p>The syntax, while pragmatic at the time and while it does get the job done, is certainly subtle and unintuitive. Even at
-the time of writing <a data-link-type="biblio" href="#biblio-dne" title="The Design and Evolution of C++">[DNE]</a>, Stroustrup described it as "a bit of a wart."</p>
+   <p>The syntax, while pragmatic at the time, and while it does get the job done, is certainly subtle and unintuitive. Even
+at the time of writing <a data-link-type="biblio" href="#biblio-dne" title="The Design and Evolution of C++">[DNE]</a>, Stroustrup described it as "a bit of a wart."</p>
    <p>Today, this syntax is a very notable wart, especially in light of syntax improvements and pushes for more modern syntax
 in the language. Today, a much different design decision would likely have been made, especially given tools like
 contextual keywords, which didn’t exist at the time.</p>
@@ -2335,8 +2335,7 @@ member function pointers:</p>
 <c- k>auto</c-><c- p>(</c-><c- n>S</c-><c- o>::*</c-> <c- n>post</c-><c- p>)(</c-><c- b>int</c-><c- p>)</c-> <c- o>=</c-> <c- o>&amp;</c-><c- n>S</c-><c- o>::</c-><c- k>operator</c-><c- o>++</c-><c- p>;</c->
 </pre>
    <p>Passing an extra <code class="highlight"><c- b>int</c-></code> parameter would also be required when using the postfix member function pointer.</p>
-   <p>While it is unfortunate that the wart could still manifest, making member function pointers to increment/decrement
-operator overloads is likely rare. This could be partially alleviated by:</p>
+   <p>This could be partially alleviated with the following semantics, at the cost of some added complexity:</p>
 <pre class="language-cpp highlight"><c- k>auto</c-> <c- n>pre</c-> <c- o>=</c-> <c- o>&amp;</c-><c- n>S</c-><c- o>::</c-><c- k>operator</c-><c- o>++</c-> <c- n>prefix</c-><c- p>;</c->
 <c- k>auto</c-> <c- n>post</c-> <c- o>=</c-> <c- o>&amp;</c-><c- n>S</c-><c- o>::</c-><c- k>operator</c-><c- o>++</c-> <c- n>postfix</c-><c- p>;</c->
 <c- c1>// works as if by:</c->
@@ -2345,6 +2344,8 @@ operator overloads is likely rare. This could be partially alleviated by:</p>
 <c- c1>// auto(S::* tmp2)(int) = &amp;S::operator++;</c->
 <c- c1>// auto pre = tmp2;</c->
 </pre>
+   <p>While it is unfortunate that the signature wart could still manifest, making member function pointers to
+increment/decrement operator overloads is likely rare.</p>
    <h2 class="heading settled" data-level="4" id="alternatives"><span class="secno">4. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
    <p>In a discussion on the #include&lt;c++> discord, Janet Cobb suggested the following utility and workaround:</p>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
@@ -2359,10 +2360,8 @@ operator overloads is likely rare. This could be partially alleviated by:</p>
 </pre>
    <p>While this is only a facade over the problem (not entirely dissimilar to the proposed change, which is merely syntactic
 sugar), it would be a very low-complexity library change that would greatly improve the status quo without adding
-language complexity. It could be used as follows:</p>
+language complexity. In addition to usage as <code class="highlight"><c- o>++</c-><c- n>s</c-></code> and <code class="highlight"><c- n>s</c-><c- o>++</c-></code>, it could be used as follows:</p>
 <pre class="language-cpp highlight"><c- n>S</c-> <c- n>s</c-><c- p>;</c->
-<c- o>++</c-><c- n>s</c-><c- p>;</c->
-<c- n>s</c-><c- o>++</c-><c- p>;</c->
 <c- n>s</c-><c- p>.</c-><c- k>operator</c-><c- o>++</c-><c- p>();</c->
 <c- n>s</c-><c- p>.</c-><c- k>operator</c-><c- o>++</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>postfix</c-><c- p>());</c->
 <c- k>auto</c-><c- p>(</c-><c- n>S</c-><c- o>::*</c-> <c- n>pre</c-><c- p>)(</c-><c- n>std</c-><c- o>::</c-><c- n>prefix</c-><c- p>)</c-> <c- o>=</c-> <c- o>&amp;</c-><c- n>S</c-><c- o>::</c-><c- k>operator</c-><c- o>++</c-><c- p>;</c->
