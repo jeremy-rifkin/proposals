@@ -72,11 +72,11 @@ appears about
 [647k times](https://github.com/search?type=code&q=%2Fstd%3A%3Aruntime_error%2F+language%3AC%2B%2B+-is%3Afork)
 at the time of writing.
 
-While this isn't a *massive* problem &mdash; it's not an everyday language functionality and certainly developers are
-able to memorize which one is which or look up the syntax &mdash; developers should not have to use memorization tricks
-in order to overload these operators or remember what the syntax means when reading code. Today, we can and should do
-better. Providing a modern syntax for these operators would significantly improve the expressiveness, intuitiveness,
-readability, and teachability of code using these overloads and would correct a historical wart of the language.
+While this isn't a problem most developers run into daily, and certainly developers are able to memorize which signature
+is which or look up the syntax, developers should not have to use memorization tricks in order to overload these
+operators or remember what the syntax means when reading code. Today, we can do better. This paper proposes a modern
+syntax for these operators, which significantly improves the expressiveness, intuitiveness, readability, and
+teachability of code using these overloads and largely corrects a historical wart of the language.
 
 # History
 
@@ -139,8 +139,8 @@ used to indicate the odd postfix operators. ...
 
 </blockquote>
 
-The syntax, while pragmatic at the time and while it does get the job done, is certainly subtle and unintuitive. Even at
-the time of writing [[DNE]], Stroustrup described it as "a bit of a wart."
+The syntax, while pragmatic at the time, and while it does get the job done, is certainly subtle and unintuitive. Even
+at the time of writing [[DNE]], Stroustrup described it as "a bit of a wart."
 
 Today, this syntax is a very notable wart, especially in light of syntax improvements and pushes for more modern syntax
 in the language. Today, a much different design decision would likely have been made, especially given tools like
@@ -200,8 +200,7 @@ auto(S::* post)(int) = &S::operator++;
 
 Passing an extra `int` parameter would also be required when using the postfix member function pointer.
 
-While it is unfortunate that the wart could still manifest, making member function pointers to increment/decrement
-operator overloads is likely rare. This could be partially alleviated by:
+This could be partially alleviated with the following semantics, at the cost of some added complexity:
 
 ```cpp
 auto pre = &S::operator++ prefix;
@@ -212,6 +211,9 @@ auto post = &S::operator++ postfix;
 // auto(S::* tmp2)(int) = &S::operator++;
 // auto pre = tmp2;
 ```
+
+While it is unfortunate that the signature wart could still manifest, making member function pointers to
+increment/decrement operator overloads is likely rare.
 
 # Alternatives
 
@@ -231,12 +233,10 @@ struct S {
 
 While this is only a facade over the problem (not entirely dissimilar to the proposed change, which is merely syntactic
 sugar), it would be a very low-complexity library change that would greatly improve the status quo without adding
-language complexity. It could be used as follows:
+language complexity. In addition to usage as `++s` and `s++`, it could be used as follows:
 
 ```cpp
 S s;
-++s;
-s++;
 s.operator++();
 s.operator++(std::postfix());
 auto(S::* pre)(std::prefix) = &S::operator++;
