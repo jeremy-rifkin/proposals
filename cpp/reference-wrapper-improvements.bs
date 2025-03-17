@@ -193,8 +193,10 @@ like `proxy_holder`/`arrow_proxy` ([stackoverflow](https://stackoverflow.com/a/2
 types are less so. Fundamentally, the main commonality between all these types isn't nullability but rather serving as
 proxies to other objects via either wrapping or indirection. As such, `operator->` is fitting for `reference_wrapper`.
 
-With the expanded use case for `reference_wrapper`, it is better provided through `<utility>` than `<functional>`. This
-follows the precedent of [[P0472]], which added `monostate` to `<utility>`.
+With the expanded use case for `reference_wrapper`, it is better provided through `<utility>` so that `<functional>`
+does not have to be pulled in just to use the type. This follows the precedent of [[P0472]], which added `monostate` to
+`<utility>`. This will require that implementations either `#include <utility>` from `<functional>` or put
+`reference_wrapper` in a common implementation header that can be included in both places.
 
 # Proposed Wording
 
@@ -259,67 +261,59 @@ Proposed wording relative to [[!N4950]]:
 
 Move [refwrap] and subsections to [utility.refwrap].
 
-Remove from [functional.syn]:
+Move from [functional.syn] to [utility.syn]:
 
-<div class="delall">
+<pre highlight="cpp">
+  // [<ins>utility.</ins>refwrap], reference_wrapper
+  template&lt;class T> class reference_wrapper;                                        // freestanding
 
-```cpp
-  // [refwrap], reference_wrapper
-  template<class T> class reference_wrapper;                                        // freestanding
+  template&lt;class T> constexpr reference_wrapper&lt;T> ref(T&) noexcept;                // freestanding
+  template&lt;class T> constexpr reference_wrapper&lt;const T> cref(const T&) noexcept;   // freestanding
+  template&lt;class T> void ref(const T&&) = delete;                                   // freestanding
+  template&lt;class T> void cref(const T&&) = delete;                                  // freestanding
 
-  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;                // freestanding
-  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;   // freestanding
-  template<class T> void ref(const T&&) = delete;                                   // freestanding
-  template<class T> void cref(const T&&) = delete;                                  // freestanding
+  template&lt;class T>
+    constexpr reference_wrapper&lt;T> ref(reference_wrapper&lt;T>) noexcept;              // freestanding
+  template&lt;class T>
+    constexpr reference_wrapper&lt;const T> cref(reference_wrapper&lt;T>) noexcept;       // freestanding
 
-  template<class T>
-    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;              // freestanding
-  template<class T>
-    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;       // freestanding
-
-  // [refwrap.common.ref], common_reference related specializations
-  template<class R, class T, template<class> class RQual, template<class> class TQual>
+  // [<ins>utility.</ins>refwrap.common.ref], common_reference related specializations
+  template&lt;class R, class T, template&lt;class> class RQual, template&lt;class> class TQual>
     requires see below
-  struct basic_common_reference<R, T, RQual, TQual>;
+  struct basic_common_reference&lt;R, T, RQual, TQual>;
 
-  template<class T, class R, template<class> class TQual, template<class> class RQual>
+  template&lt;class T, class R, template&lt;class> class TQual, template&lt;class> class RQual>
     requires see below
-  struct basic_common_reference<T, R, TQual, RQual>;
-```
-
-</div>
+  struct basic_common_reference&lt;T, R, TQual, RQual>;
+</pre>
 
 Add to [utility.syn]:
 
-<div class="insall">
-
-```cpp
+<pre highlight="cpp">
   // [utility.refwrap], reference_wrapper
-  template<class T> class reference_wrapper;                                        // freestanding
+  template&lt;class T> class reference_wrapper;                                        // freestanding
 
-  template<class T> constexpr reference_wrapper<T> ref(T&) noexcept;                // freestanding
-  template<class T> constexpr reference_wrapper<const T> cref(const T&) noexcept;   // freestanding
-  template<class T> void ref(const T&&) = delete;                                   // freestanding
-  template<class T> void cref(const T&&) = delete;                                  // freestanding
+  template&lt;class T> constexpr reference_wrapper&lt;T> ref(T&) noexcept;                // freestanding
+  template&lt;class T> constexpr reference_wrapper&lt;const T> cref(const T&) noexcept;   // freestanding
+  template&lt;class T> void ref(const T&&) = delete;                                   // freestanding
+  template&lt;class T> void cref(const T&&) = delete;                                  // freestanding
 
-  template<class T>
-    constexpr reference_wrapper<T> ref(reference_wrapper<T>) noexcept;              // freestanding
-  template<class T>
-    constexpr reference_wrapper<const T> cref(reference_wrapper<T>) noexcept;       // freestanding
+  template&lt;class T>
+    constexpr reference_wrapper&lt;T> ref(reference_wrapper&lt;T>) noexcept;              // freestanding
+  template&lt;class T>
+    constexpr reference_wrapper&lt;const T> cref(reference_wrapper&lt;T>) noexcept;       // freestanding
 
-  template<class T> using reference = reference_wrapper<T>;                         // freestanding
+  <ins>template&lt;class T> using reference = reference_wrapper&lt;T>;                         // freestanding</ins>
 
   // [utility.refwrap.common.ref], common_reference related specializations
-  template<class R, class T, template<class> class RQual, template<class> class TQual>
+  template&lt;class R, class T, template&lt;class> class RQual, template&lt;class> class TQual>
     requires see below
-  struct basic_common_reference<R, T, RQual, TQual>;
+  struct basic_common_reference&lt;R, T, RQual, TQual>;
 
-  template<class T, class R, template<class> class TQual, template<class> class RQual>
+  template&lt;class T, class R, template&lt;class> class TQual, template&lt;class> class RQual>
     requires see below
-  struct basic_common_reference<T, R, TQual, RQual>;
-```
-
-</div>
+  struct basic_common_reference&lt;T, R, TQual, RQual>;
+</pre>
 
 Add a paragraph at the end of [functional.syn]:
 
@@ -377,7 +371,7 @@ Add to [utility.refwrap.access]:
 
 <div class="insall">
   <p><code>constexpr T* operator->() const noexcept;</code></p>
-  <p class="indent">*Returns*: `&get()`.</p>
+  <p class="indent">*Returns*: `addressof(get())`.</p>
 
   <p><code>constexpr T& operator*() const noexcept;</code></p>
   <p class="indent">*Returns*: The stored reference.</p>
