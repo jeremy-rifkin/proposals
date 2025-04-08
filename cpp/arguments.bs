@@ -48,7 +48,7 @@ design elements, and good ideas from both.
 
 # Revision History
 
-## R1:
+## R1
 
 Incorporated feedback from LEWGI regarding interface, wording, bags of bytes, bags of code points, etc.
 
@@ -444,9 +444,9 @@ Insert a new section [arguments]:
 ```cpp
 namespace std {
   class argument;
-  span<argument> arguments();
+  span<const argument> arguments();
   template<class Allocator = allocator<argument>>
-    span<argument> arguments(const Allocator&);
+    span<const argument> arguments(const Allocator&);
 }
 ```
 
@@ -457,21 +457,21 @@ arguments passed to the program.</p>
 
 ```cpp
 namespace std {
-  span<argument> arguments();
+  span<const argument> arguments();
   template<class Allocator = allocator<argument>>
-    span<argument> arguments(const Allocator&);
+    span<const argument> arguments(const Allocator&);
 }
 ```
 
-<p><code>span&lt;argument> arguments();</code></p>
-<p class="indent">*Effects*: Returns a span of `argument` objects representing the program's arguments.</p>
+<p><code>span&lt;const argument> arguments();</code></p>
+<p class="indent">*Effects*: Returns a span of `const argument` objects representing the program's arguments.</p>
 <p class="indent">*Throws*: May throw if allocation throws.</p>
 
 <p>
   <code>template&lt;class Allocator = allocator&lt;argument>></code><br/>
-  <code>&nbsp;&nbsp;span&lt;argument> arguments(const Allocator&);</code>
+  <code>&nbsp;&nbsp;span&lt;const argument> arguments(const Allocator&);</code>
 </p>
-<p class="indent">*Effects*: Returns a span of `argument` objects representing the program's arguments.</p>
+<p class="indent">*Effects*: Returns a span of `const argument` objects representing the program's arguments.</p>
 <p class="indent">*Throws*: May throw if `Allocator::allocate` throws.</p>
 
 <h3 class="no-num no-toc mono">Class `argument` [arguments.argument]</h3>
