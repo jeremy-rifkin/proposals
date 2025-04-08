@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version b25686b9f, updated Fri Mar 14 14:15:20 2025 -0700" name="generator">
   <link href="https://isocpp.org/files/papers/P3474R0.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="eeb45ff787919cf8b759f070b5831f12ccb15d1b" name="revision">
+  <meta content="79d06af57b0f3e1d0a22f96280f837ce0cf20ed6" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
@@ -2199,7 +2199,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li>
      <a href="#revision-history"><span class="secno">2</span> <span class="content">Revision History</span></a>
      <ol class="toc">
-      <li><a href="#r1"><span class="secno">2.1</span> <span class="content">R1:</span></a>
+      <li><a href="#r1"><span class="secno">2.1</span> <span class="content">R1</span></a>
      </ol>
     <li><a href="#introduction"><span class="secno">3</span> <span class="content">Introduction</span></a>
     <li><a href="#previous-straw-polls-and-discussion"><span class="secno">4</span> <span class="content">Previous Straw Polls and Discussion</span></a>
@@ -2227,7 +2227,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 an interface for accessing command line arguments outside <code class="highlight"><c- n>main</c-></code> to WG14 in <a data-link-type="biblio" href="#biblio-n2948" title="Accessing the command line arguments outside of main()">[N2948]</a>. This paper borrows wording,
 design elements, and good ideas from both.</p>
    <h2 class="heading settled" data-level="2" id="revision-history"><span class="secno">2. </span><span class="content">Revision History</span><a class="self-link" href="#revision-history"></a></h2>
-   <h3 class="heading settled" data-level="2.1" id="r1"><span class="secno">2.1. </span><span class="content">R1:</span><a class="self-link" href="#r1"></a></h3>
+   <h3 class="heading settled" data-level="2.1" id="r1"><span class="secno">2.1. </span><span class="content">R1</span><a class="self-link" href="#r1"></a></h3>
    <p>Incorporated feedback from LEWGI regarding interface, wording, bags of bytes, bags of code points, etc.</p>
    <ul>
     <li data-md>
@@ -2571,25 +2571,25 @@ came up after the poll was started and thus wasn’t captured in the poll.</p>
     <h3 class="no-num no-toc mono heading settled" id="header-arguments-synopsis-argumentssyn"><span class="content">Header <code class="highlight"><c- o>&lt;</c-><c- n>arguments</c-><c- o>></c-></code> synopsis [arguments.syn]</span><a class="self-link" href="#header-arguments-synopsis-argumentssyn"></a></h3>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
   <c- k>class</c-> <c- nc>argument</c-><c- p>;</c->
-  <c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c->
+  <c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c->
   <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c->
-    <c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c->
+    <c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c->
 <c- p>}</c->
 </pre>
     <h3 class="no-num no-toc mono heading settled" id="function-arguments-argumentsarguments"><span class="content">Function <code class="highlight"><c- n>arguments</c-></code> [arguments.arguments]</span><a class="self-link" href="#function-arguments-argumentsarguments"></a></h3>
     <p>The function and function template <code class="highlight"><c- n>arguments</c-></code> return read-only spans of <code class="highlight"><c- n>argument</c-></code> objects corresponding to
 arguments passed to the program.</p>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
-  <c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c->
+  <c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c->
   <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c->
-    <c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c->
+    <c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c->
 <c- p>}</c->
 </pre>
-    <p><code class="highlight"><c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c-></code></p>
-    <p class="indent"><em>Effects</em>: Returns a span of <code class="highlight"><c- n>argument</c-></code> objects representing the program’s arguments.</p>
+    <p><code class="highlight"><c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>();</c-></code></p>
+    <p class="indent"><em>Effects</em>: Returns a span of <code class="highlight"><c- k>const</c-> <c- n>argument</c-></code> objects representing the program’s arguments.</p>
     <p class="indent"><em>Throws</em>: May throw if allocation throws.</p>
-    <p> <code class="highlight"><c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c-></code><br> <code class="highlight">  <c- n>span</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c-></code> </p>
-    <p class="indent"><em>Effects</em>: Returns a span of <code class="highlight"><c- n>argument</c-></code> objects representing the program’s arguments.</p>
+    <p> <code class="highlight"><c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>Allocator</c-> <c- o>=</c-> <c- n>allocator</c-><c- o>&lt;</c-><c- n>argument</c-><c- o>>></c-></code><br> <code class="highlight">  <c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>argument</c-><c- o>></c-> <c- n>arguments</c-><c- p>(</c-><c- k>const</c-> <c- n>Allocator</c-><c- o>&amp;</c-><c- p>);</c-></code> </p>
+    <p class="indent"><em>Effects</em>: Returns a span of <code class="highlight"><c- k>const</c-> <c- n>argument</c-></code> objects representing the program’s arguments.</p>
     <p class="indent"><em>Throws</em>: May throw if <code class="highlight"><c- n>Allocator</c-><c- o>::</c-><c- n>allocate</c-></code> throws.</p>
     <h3 class="no-num no-toc mono heading settled" id="class-argument-argumentsargument"><span class="content">Class <code class="highlight"><c- n>argument</c-></code> [arguments.argument]</span><a class="self-link" href="#class-argument-argumentsargument"></a></h3>
     <p>An object of class <code class="highlight"><c- n>argument</c-></code> is a view of a character string argument passed to the program in an operating
