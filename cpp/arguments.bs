@@ -2,12 +2,12 @@
 Title: std::arguments
 H1: <code>std::arguments</code>
 Group: WG21
-Audience: EWGI, LEWGI
-Shortname: P3474
-Revision: 0
-Status: P
+Audience: EWGI, LEWGI, SG16
+Shortname: D3474
+Revision: 1
+Status: D
 Date: 2024-10-15
-Editor: Jeremy Rifkin
+Editor: Jeremy Rifkin, jeremy@rifkin.dev
 Abstract: This paper proposes an encoding-friendly and modern interface for accessing command line arguments throughout a program.
 Markup Shorthands: markdown on
 ED: https://isocpp.org/files/papers/P3474R0.html
@@ -46,41 +46,61 @@ tbody tr:nth-child(even) {
 an interface for accessing command line arguments outside `main` to WG14 in [[N2948]]. This paper borrows wording,
 design elements, and good ideas from both.
 
+# Revision History
+
+## R1:
+
+Incorporated feedback from LEWGI regarding interface, wording, bags of bytes, bags of code points, etc.
+
+- Added path accessor
+- Added a means to construct from a user-specified list of arguments (useful for testing etc.)
+- Added feature test macro
+- Added reply-to email
+- Fixed a handful of problems with paper consistency and wording
+
 # Introduction
 
-This paper aims to solve three problems: Encoding and portability problems with command line arguments, an interface for
-accessing arguments outside of main, and a modern interface for accessing arguments. It does so by introducing a
-`std::arguments` class that provides a modern and encoding-friendly interface for arguments.
+This paper aims to solve two main problems:
+
+1. Encoding and portability problems with command line arguments
+2. `int argc, char** argv` isn't a modern-C++ way of representing information like this and is not friendly for novices
 
 **Encoding:** The only standard means for accessing access command-line arguments in C++ is via `int main(int argc,
 char** argv)`. This is a staple of C and C++, however, it's not well-suited for portable applications because the
 encoding of `argv` varies system to system <a data-link-type=biblio data-biblio-type=informative data-lt="What is the encoding of argv?">[[What is the encoding of argv?]]</a>.
-On Windows, the native encoding is UTF-16 and it's recommended to use `wmain` instead of `main` for portable code. In
-order to facilitate `argv`, UTF-16 arguments must be converted using legacy Windows code pages. The preferred ways to
-handle command line arguments on Windows are platform-specific functions, `WinMain`, or `wmain`. Even on Unix-based
-systems the encoding of `char** argv` is not always clear. Tackling this problem more or less necessitates an interface
-for accessing command line arguments independent of `main` as adding a new signature to `main` has been rejected by the
-committee.
-
-**Access outside main:** It may be desirable to access command line arguments outside of `main` and even to do so before
-`main`. Some examples could include logging diagnostic information in a crash handler and some designs for a command
-line argument parser. Currently, command line arguments are only available inside of `main` which requires a programmer
-to manually pass arguments throughout the program or create their own global storage for arguments. This can add clutter
-and introduce unnecessary complexity, especially if argument handling doesn't happen "close" to `main`. There is
-precedent from other languages for global access, notably languages such as Python, Go, Rust, Swift, Ruby, C#, Haskell,
-Ada, and many others provide an interface for accessing arguments from anywhere in a program. Additionally, many C++
-frameworks make arguments available outside `main`, such as QT with `QCoreApplication::arguments`.
+On Windows, the native encoding is UTF-16 and it's recommended to use `wmain` or `WinMain` instead of `main` for
+portable code. In order to facilitate the standard `char** argv`, UTF-16 arguments must be converted using legacy
+Windows code pages. Even on Unix-based systems the encoding of `char** argv` is not always clear.
 
 **Modernity:** Passing arrays via a pointer and length argument is a very antiquated pattern rendered obsolete by modern
-solutions such as `std::span`. `main` is the one case where separate pointer and length arguments are still a
-requirement if command line arguments are desired. A modern signature for `main` along the lines of
-`int main(std::span<char*> argv)`, `int main(std::span<std::string_view> argv)`, or `int main(std::argument_list argv)`
-was previously rejected by the committee due to concerns surrounding complexity, overhead, and encoding issues
-[[P0781]]. On top of new functionality and increased portability, a facility such as `std::arguments` provides a modern
-C++ solution for accessing arguments. An important benefit to this interface is teachability: Currently command line
-arguments require introduction to pointers relatively early on in education as well as subjection to footguns and
-confusion about the difference between C strings and C++ strings. This adds steepness to an already hazardously steep
-learning curve.
+solutions such as `std::span`. `main` is one of the last places in C++ where where separate pointer and length arguments
+are still needed. A modern signature for `main` along the lines of `int main(std::span<char*> argv)`,
+`int main(std::span<std::string_view> argv)`, or `int main(std::argument_list argv)` was previously rejected by the
+committee due to concerns surrounding complexity, overhead, and encoding issues [[P0781]]. An important benefit to a
+modern interface is teachability: Currently command line arguments require introduction to pointers relatively early on
+in education as well as subjection to footguns such as `argv[1] == "--help"` and confusion about the difference between
+C strings and C++ strings. This adds pitch to an already hazardously steep learning curve.
+
+Tackling both of these problems requires a solution independent of `main`, as changes to `main`'s signature have
+previously been rejected. As such, this paper proposes a `std::arguments()` function which provides an object that can
+be used for accessing command line arguments.
+
+While it's not a primary goal of this paper, this interface results in providing some additional helpful functionality:
+
+**Access outside main:** In some cases it may be desirable to access command line arguments outside of `main` and even
+to do so before `main`. Some examples could include:
+
+- Logging diagnostic information in a crash handler
+- Some designs for a command line argument parser
+- Diagnostic libraries
+- Access to arguments from pre-loadable libraries
+
+Currently, command line arguments are only available inside of `main` which requires a programmer to manually pass this
+information throughout the program or create their own global storage for arguments. This can add clutter and introduce
+unnecessary complexity, especially if argument handling doesn't happen "close" to `main`. There is precedent from other
+languages for global access, notably languages such as Python, Go, Rust, Swift, Ruby, C#, Haskell, Ada, and many others
+provide an interface for accessing arguments from anywhere in a program. Additionally, many C++ frameworks make
+arguments available outside `main`, such as QT with `QCoreApplication::arguments`.
 
 # Previous Straw Polls and Discussion
 
@@ -161,6 +181,14 @@ Polls on [[P1275]] by SG16:
 Key concerns discussed included mutability of arguments, overhead of initializing data structures before
 `main`, and how to handle different encodings.
 
+LEWGI discussion on P3474R0:
+
+- Continued support for bag of bytes with conversion up to user
+  - Easily accessible conversions are very important, it's easy to make errors
+- Support for user-provided arguments through this interface
+- Suggestion for path accessors
+- Some discussion on low and zero-overhead approaches for this
+
 # Implementability
 
 On Windows, command line arguments can be accessed by `GetCommandLineW`. This function returns the command line as a
@@ -179,31 +207,31 @@ Implementation on other Unix-based systems is more challenging. There are four o
     instead of a libc change.
 3. Use `__dl_argv` which exists in glibc. Unfortunately, absent a glibc change, looping through `__dl_argv` would be
     needed to determine `argc` as `__dl_argc` is hidden.
-4. Read from and tokenize `/proc/self/cmdline`.
-5. Glibc passes `argc` and `argv` to entries in the `.init_array`.
+4. Read from and tokenize `/proc/self/cmdline`. (this has length limitations)
+5. Use `argc` and `argv` passed by glibc to entries in the `.init_array`.
+
+Approaches 2-4 are undesirable for various reasons. Approach 5 works on glibc but not necessarily other libcs and there
+are also implications with shared libraries. Approach 1 is most comprehensive but requires a paper.
 
 # Proposed Design
 
-This paper introduces two classes, `std::arguments` and `std::argument`, and a header, `<arguments>`.
+This paper proposes a function `std::arguments`, a class `std::argument`, and a header, `<arguments>`.
 
-`std::arguments` has the interface of a constant `std::span` excluding the subview interface, modifiers, constructors,
-`size_bytes`, and `data`. Its default constructor initializes the object to represent the program's command-line
-arguments and may perform allocation.
+`std::arguments()` returns a span of `const std::argument`s corresponding to the program command line arguments.
 
-`std::arguments` has a `value_type` of `std::argument` which mirrors the design of `std::filesystem::path` by providing
-observers that can convert to desired encodings. SG16 indicated a desire to follow the precedent of
-`std::filesystem::path`. Both paths and arguments can be encoded arbitrarily or even have no encoding; paths could be
-any sequence of bytes and command line arguments can be too. `std::argument` may be a view of a string or may own an
-allocation.
+`std::argument` mirrors the design of `std::filesystem::path` by providing observers that can convert to desired
+encodings. SG16 previously indicated a desire to follow the precedent of `std::filesystem::path`. Both paths and
+arguments can be encoded arbitrarily or even have no encoding; paths could be any sequence of bytes and command line
+arguments can be too. `std::argument` may be a view of a string or may own an allocation.
 
-While it is not uncommon practice to modify the contents of `char** argv`, `std::arguments` is entirely read-only in
+While it is not uncommon practice to modify the contents of `char** argv`, `std::arguments` returns a read-only span in
 order to not introduce dangers surrounding global mutable state. Whether changes made to `argv` in `main` are reflected
 in `std::arguments` is implementation-defined.
 
 ## Design Considerations
 
-The main design considerations come down to allocation, when tokenization or other argument preprocessing happens, and
-whether modifications to `argv` in `main` are reflected in `std::arguments`.
+The main design considerations come down to allocation, when potential tokenization or other argument preprocessing
+happens, and whether modifications to `argv` in `main` are reflected in `std::arguments`.
 
 <b>Reflecting `argv` modifications from `main`:</b> It is desirable for `std::arguments` to contain the same values
 throughout the lifetime of a program and to not reflect changes to `argv` in `main`. Unfortunately, this would require
@@ -235,7 +263,7 @@ Unfortunately, this would prevent the iterator from satisfying the *Cpp17RandomA
 requirements, and may be error prone in the case of trying to store a reference to a `std::argument`. The proposed
 requirements here will require backing storage.
 
-<b>Global singleton, a function returning a reference, or construction:</b> `std::arguments` could be implemented as a
+<b>Global singleton, a function returning a span, or construction:</b> TODO `std::arguments` could be implemented as a
 global singleton similar to `std::cout`, a `std::arguments` function returning a reference to a singleton, or as an
 object that the user constructs. While an object the user constructs potentially results in allocation at multiple
 points in a program, as well as possibly seeing different values if `argv` is modified in `main`, it's also desirable to
@@ -255,12 +283,12 @@ tokenizing on Windows. Rust accesses `argv` and `argc` on most Unix-based system
 Because the design of this library feature involves a lot of tradeoffs, it is the goal of this paper to offer as much
 implementation flexibility as possible.
 
-## Future Interface Expansion
+# Ergonomics
 
-Author's note: While most large applications should probably use a library for argument parsing, it is my hope that in
-the case of more ad-hoc argument parsing it would be possible to portably write a check such as
-`std::arguments.at(1) == "--help"` or `std::arguments.at(1).native() == "--help"`. Another helpful operation would be
-`.starts_with("--")`. Unfortunately, encoding makes it challenging to do operations such as this portably.
+While most large applications should probably use a library for argument parsing, it is my hope that in the case of more
+ad-hoc argument parsing it would be possible to portably write a check such as `std::arguments().at(1) == "--help"` or
+`std::arguments().at(1).native() == "--help"`. Another helpful operation would be `.starts_with("--")`. Unfortunately,
+encoding makes these operations challenging to do portably.
 
 Because encoding will vary between systems and `native()` is implementation-defined, currently the only way to do this
 would involve the overhead of creating a string for a given encoding or an ugly macro to create a platform-dependent
@@ -268,18 +296,20 @@ string literal:
 
 ```cpp
 // The overhead here is unfortunate but OK for 99% of uses
-if(std::arguments.at(1).string() == "--help") {
+if(std::arguments().at(1).string() == "--help") {
   // ...
 }
+```
 
-// or:
+ok
 
+```cpp
 #ifdef _WIN32
 #define ARG(str) L##str
 #else
 #define ARG(str) str
 #endif
-if(std::arguments.at(1).native() == ARG("--help")) {
+if(std::arguments().at(1).native() == ARG("--help")) {
   // ...
 }
 ```
@@ -288,7 +318,18 @@ A UDL could also be considered, however, this is a more general problem that, in
 addressed directly rather than through a bespoke solution. The problem of operations between strings of different
 encodings would best be tackled in another paper.
 
-## Bikeshedding
+Alternatively, since this paper is targeting C++29 maybe transcoding[[P2728]] will solve all problems:
+
+```cpp
+if(std::arguments().at(1) | std::uc::to_utf8  == u8"--help") {
+  // ...
+}
+```
+
+If transcoding is seen as desirable here, `std::argument` should provide some helper to do the system encoding to utf-N
+conversion
+
+# Bikeshedding
 
 This paper uses the `std::arguments` naming from [[P1275]], however, the name is subject to bikeshedding. One point
 brought up on the mailing list was that `arguments` is a very generic name and it might be desirable to reserve it for
@@ -317,6 +358,8 @@ came up after the poll was started and thus wasn't captured in the poll.
 
 # Reference Implementation
 
+TODO: Update for R1
+
 A reference implementation / proof of concept is at [https://github.com/jeremy-rifkin/arguments](https://github.com/jeremy-rifkin/arguments).
 
 # Proposed Wording
@@ -335,24 +378,44 @@ div.insall {
   color: #000 !important;
   padding: 5px;
 }
-div.insall h3, div.insall h4 {
+div.delall {
+  background: #fcc !important;
+  color: #000 !important;
+  padding: 5px;
+}
+div.insall h3, div.insall h4,
+div.delall h3, div.delall h4 {
   color: #000 !important;
 }
 div.insall pre {
   border: 10px solid #cfc !important;
-  background: #0d0d0d !important;
+  /* background: #0d0d0d !important; */
+}
+div.delall pre {
+  border: 10px solid #fcc !important;
+  /* background: #0d0d0d !important; */
 }
 @media (prefers-color-scheme: dark) {
   div.insall {
     background: #cfc !important;
     color: #000 !important;
   }
-  div.insall h3, div.insall h4 {
+  div.delall {
+    background: #fcc !important;
+    color: #000 !important;
+    padding: 5px;
+  }
+  div.insall h3, div.insall h4,
+  div.delall h3, div.delall h4 {
     color: #000 !important;
   }
   div.insall pre {
     border: 10px solid #cfc !important;
-    background: #0d0d0d !important;
+    background: rgb(13, 13, 13) !important;
+  }
+  div.delall pre {
+    border: 10px solid #fcc !important;
+    background: rgb(13, 13, 13) !important;
   }
 }
 .indent {
@@ -360,9 +423,17 @@ div.insall pre {
 }
 </style>
 
-Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/headers">[headers]</a> table 24:
+Insert into [headers] table 24:
 
 > <ins>`<arguments>`</ins>
+
+Insert into [version.syn]:
+
+<div class="insall">
+```cpp
+#define __cpp_lib_arguments                         20????L // freestanding, also in <arguments>
+```
+</div>
 
 Insert a new section [arguments]:
 
@@ -373,129 +444,35 @@ Insert a new section [arguments]:
 ```cpp
 namespace std {
   class argument;
-  template<class Allocator = allocator<argument>> class arguments;
+  span<argument> arguments();
+  template<class Allocator = allocator<argument>>
+    span<argument> arguments(const Allocator&);
 }
 ```
 
-<h3 class="no-num no-toc mono">Class `arguments` [arguments.view]</h3>
+<h3 class="no-num no-toc mono">Function `arguments` [arguments.arguments]</h3>
 
-<p>Class `arguments` is a read-only container holding a continuous range of `argument` objects corresponding to arguments passed to the program.</p>
-<p>All member functions of `arguments` have constant time complexity except the constructor.</p>
+<p>The function and function template `arguments` return read-only spans of `argument` objects corresponding to
+arguments passed to the program.</p>
 
 ```cpp
 namespace std {
+  span<argument> arguments();
   template<class Allocator = allocator<argument>>
-  class arguments {
-  public:
-    using value_type = const argument;
-    using size_type = size_t;
-    using difference_type = ptrdiff_t;
-    using pointer = value_type*;
-    using const_pointer = value_type*;
-    using reference = value_type&;
-    using const_reference = value_type&;
-    using const_iterator = /* implementation-defined */; // see [arguments.view.iterators]
-    using iterator = const_iterator;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-    using reverse_iterator = const_reverse_iterator;
-
-    // [arguments.view.cons], constructors
-    arguments() noexcept(noexcept(Allocator())) : arguments(Allocator()) {}
-    explicit arguments(const Allocator&);
-
-    // [arguments.view.access], access
-    reference operator[](size_type index) const noexcept;
-    reference at(size_type index) const;
-
-    // [arguments.view.obs], observers
-    size_type size() const noexcept;
-    bool empty() const noexcept;
-
-    // [arguments.view.iterators], iterators
-    const_iterator begin() const noexcept;
-    const_iterator end() const noexcept;
-
-    const_iterator cbegin() const noexcept;
-    const_iterator cend() const noexcept;
-
-    const_reverse_iterator rbegin() const noexcept;
-    const_reverse_iterator rend() const noexcept;
-
-    const_reverse_iterator crbegin() const noexcept;
-    const_reverse_iterator crend() const noexcept;
-  };
+    span<argument> arguments(const Allocator&);
 }
 ```
 
-<h4 class="no-num no-toc mono">Constructors [arguments.view.cons]</h4>
+<p><code>span&lt;argument> arguments();</code></p>
+<p class="indent">*Effects*: Returns a span of `argument` objects representing the program's arguments.</p>
+<p class="indent">*Throws*: May throw if allocation throws.</p>
 
-<p><code>explicit arguments(const Allocator&) noexcept;</code></p>
-<p class="indent">*Effects*: Constructs an `arguments` object with the program's arguments using the specified allocator.</p>
+<p>
+  <code>template&lt;class Allocator = allocator&lt;argument>></code><br/>
+  <code>&nbsp;&nbsp;span&lt;argument> arguments(const Allocator&);</code>
+</p>
+<p class="indent">*Effects*: Returns a span of `argument` objects representing the program's arguments.</p>
 <p class="indent">*Throws*: May throw if `Allocator::allocate` throws.</p>
-
-<h4 class="no-num no-toc mono">Access [arguments.view.access]</h4>
-
-<p><code>value_type operator[](size_type index) const noexcept;</code></p>
-<p class="indent">*Preconditions*: `index < size()` is `true`.</p>
-<p class="indent">*Returns*: The argument at index `index` passed into the program from the environment. It is implementation-defined whether, in a `main` function with signature `main(int argc, char** argv)`, any modifications to `argv` are reflected by `arguments::operator[]`.</p>
-<p class="indent">*Throws*: Nothing.</p>
-<p class="indent">[Note 1: `operator[](index)` corresponds to `argv[index]` in `main(int argc, char** argv)` &mdash; end note].</p>
-
-<p><code>value_type at(size_type index) const;</code></p>
-<p class="indent">*Effects*: Equivalent to: `return operator[](index);` if `index >= size()` is `true`.</p>
-<p class="indent">*Throws*: `out_of_range` if `index >= size()` is `true`.</p>
-
-<h4 class="no-num no-toc mono">Observers [arguments.view.obs]</h4>
-
-<p><code>size_type size() const noexcept;</code></p>
-<p class="indent">*Returns*: The number of program argument.</p>
-
-<p><code>size_type empty() const noexcept;</code></p>
-<p class="indent">*Effects*: Equivalent to: `return size() == 0;`</p>
-
-<h4 class="no-num no-toc mono">Iterators [arguments.view.iterators]</h4>
-
-<p><code>using const_iterator = /* implementation-defined */;</code></p>
-<p class="indent">
-  The type models a `contiguous_iterator` ([iterator.concept.contiguous]) and meets the *Cpp17RandomAccessIterator*
-  requirements ([random.access.iterators]) whose value type is `value_type` and whose reference type is `reference`.
-</p>
-<p class="indent">
-  All requirements on container iterators ([container.reqmts]) apply to `arguments::iterator` as well.
-</p>
-
-<p>
-  <code>const_iterator begin() const noexcept;</code><br/>
-  <code>const_iterator cbegin() const noexcept;</code>
-</p>
-<p class="indent">
-  *Returns*: An iterator referring to the first program argument. If `empty()` is `true`, then it returns the same value
-  as `end()`.
-</p>
-
-<p>
-  <code>const_iterator end() const noexcept;</code><br/>
-  <code>const_iterator cend() const noexcept;</code>
-</p>
-<p class="indent">
-  *Returns*: An iterator which is the past-the-end value.
-</p>
-
-<p>
-  <code>const_iterator rbegin() const noexcept;</code><br/>
-  <code>const_iterator crbegin() const noexcept;</code>
-</p>
-<p class="indent">
-  *Effects*: Equivalent to: `return reverse_iterator(end());`
-</p>
-
-<p>
-  <code>const_iterator rend() const noexcept;</code><br/>
-  <code>const_iterator crend() const noexcept;</code>
-</p>
-<p class="indent">
-  *Effects*: Equivalent to: `return reverse_iterator(begin());`
-</p>
 
 <h3 class="no-num no-toc mono">Class `argument` [arguments.argument]</h3>
 
@@ -528,6 +505,8 @@ namespace std {
     std::u8string  u8string() const;
     std::u16string u16string() const;
     std::u32string u32string() const;
+
+    filesystem::path path() const;
 
     // [arguments.argument.compare], comparison
     friend bool operator==(const argument& lhs, const argument& rhs) noexcept;
@@ -627,6 +606,9 @@ namespace std {
 <p class="indent">*Returns*: A string representing the argument.</p>
 <p class="indent">*Remarks*: Conversion, if any, is specified by [arguments.argument.cvt].</p>
 
+<p><code>filesystem::path path() const;</code></p>
+<p class="indent">*Returns*: A `filesystem::path` corresponding to the argument.</p>
+
 <h4 class="no-num no-toc mono">Comparison [arguments.view.compare]</h4>
 
 <p><code>friend bool operator==(const argument& lhs, const argument& rhs) noexcept;</code></p>
@@ -667,6 +649,10 @@ namespace std {
     "P0781": {
         "title": "A Modern C++ Signature for main",
         "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0781r0.html"
+    },
+    "P2728": {
+        "title": "Unicode in the Library, Part 1: UTF Transcoding",
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2728r7.html"
     },
     "What is the encoding of argv?": {
         "title": "What is the encoding of argv?",
