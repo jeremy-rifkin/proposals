@@ -2,17 +2,24 @@
 Title: __COUNTER__
 H1: <code>__COUNTER__</code>
 Group: WG21
-Shortname: P3384
-Revision: 0
-Status: P
-Date: 2024-09-03
+Shortname: D3384
+Revision: 1
+Status: D
+Date: 2025-03-21
 Editor: Jeremy Rifkin
 Abstract: `__COUNTER__` is a predefined macro provided as a language extension by all major C and C++ implementations.
-          This paper aims to standardize existing practices.
+          This paper aims to standardize existing practices and match WG14's adoption of `__COUNTER__` for C2Y.
 Markup Shorthands: markdown on
-ED: https://isocpp.org/files/papers/P3384R0.html
+ED: https://isocpp.org/files/papers/D3384R1.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs)
 </pre>
+
+# Revision History
+
+## R1
+
+- Updated to reflect `__COUNTER__` has been accepted by WG14
+- Updated wording to match [[N3457]]
 
 # Introduction
 
@@ -25,6 +32,9 @@ unique identifiers, generating unique indices, and other preprocessor metaprogra
 `__COUNTER__` has not been proposed to WG21, however, it was briefly mentioned previously in a WG14 paper, *Extensions
 to the preprocessor for C2Y* [[N3190]]. The meeting minutes, [[N3227]], mention brief discussion of `__COUNTER__`'s
 implications on evaluation order and caching. No polls were taken on [[N3190]].
+
+[[N3457]], which provides a focused proposal on `__COUNTER__` for C, has been accepted by WG14 into C2Y. Given the
+shared preprocessor between C and C++, this paper follows accepted WG14 wording.
 
 This paper provides a focused proposal on `__COUNTER__` and aims to provide additional context and motivation.
 
@@ -52,7 +62,7 @@ and fallback, a developer must consult numerous widely used C++ implementations 
 `__COUNTER__` exists and does what they want.
 
 In the case of google benchmark, `__LINE__` is an adequate fallback due to how `BENCHMARK` macros are typically used.
-However, this is not an adaquate general-purpose replacement due to it not being unique in the general case.
+However, this is not an adequate general-purpose replacement due to it not being unique in the general case.
 
 While every major C++ compiler today supports `__COUNTER__`, it's not always enabled. For example, EDG only provides it
 outside of standards mode.
@@ -86,7 +96,7 @@ A brief survey of some uses of `__COUNTER__` in the C and C++ community:
 - Netdata uses `__COUNTER__` for [unique identifiers](https://github.com/netdata/netdata/blob/b138d7fc35dbfc5cb30d5c91f85960351eb87beb/src/collectors/systemd-journal.plugin/systemd-units.c#L30-L39)
 - The QMK firmware project uses `__COUNTER__` auto-incrementing endpoint numbers; [link](https://github.com/qmk/qmk_firmware/blob/fd65bd5ae014565d333195285b154d9eeca9294b/tmk_core/protocol/usb_descriptor.h#L201)
 - Yabai, a macOS window manager, uses `__COUNTER__` for unique indices in timing utilities; [link](https://github.com/koekeishiya/yabai/blob/a4062be1d28c54489400d8b84175fba271423497/src/misc/timer.h#L136-L142)
-- Drgn, a programmable debugger, uses `__COUNTER__` for unique identifiers througout the codebase; [link](https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222)
+- Drgn, a programmable debugger, uses `__COUNTER__` for unique identifiers throughout the codebase; [link](https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222)
 - Metric Panda Games uses `__COUNTER__` for [lookup tables](https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/) as part of a localization and compile-time string hashing system.
 
 Many additional uses include use for static assertions, however, that use case is now covered by built-in static
@@ -252,7 +262,7 @@ int NEW_VAR(x); // x0
 ```
 
 There are similar concerns with `__TIME__` and `__DATE__` macros surrounding header units, though the potential for
-problems is less pronounced. One option would to disallow the expansion of `__COUNTER__` in header units, however, no
+problems is less pronounced. One option would be to disallow the expansion of `__COUNTER__` in header units, however, no
 such restriction is proposed in this paper.
 
 This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
@@ -349,7 +359,7 @@ Foo obj = setup_foo();
 
 While `_` covers many uses of `__COUNTER__`, the preprocessor utility continues to be useful due to existing practice,
 uses outside local identifiers, other preprocessor metaprogramming uses of `__COUNTER__` beyond unique identifiers.
-Additionally, because of interest in avoiding divergence in the shared preprocessor, its use in C in an important
+Additionally, because of interest in avoiding divergence in the shared preprocessor, its use in C is an important
 consideration.
 
 ## Evaluation Order and Caching
@@ -366,9 +376,10 @@ This paper proposes no change to the current behavior.
 
 ## Argument Handling
 
-If passed as an argument to a function-like macro, multiple expansions of an argument including `__COUNTER__` should
-expand to the same token sequence. This paper proposes the following case should produce `0 0`. This is the current
-behavior on all compilers tested on Compiler Explorer except Chibicc, which produces `0 1`.
+If passed as an argument to a function-like macro, the argument is expanded exactly once and then preprocessing tokens
+naming the parameter are each replaced with the resulting token sequence. This paper proposes the following case should
+produce `0 0`. This is the current behavior on all compilers tested on Compiler Explorer except Chibicc, which produces
+`0 1`.
 
 ```c
 #define X(Z) Z Z
@@ -402,6 +413,8 @@ X(__COUNTER__)
 __COUNTER__ // 1
 ```
 
+The proposed wording does not address this `__VA_OPT__` corner case and it remains an area of implementation divergence.
+
 If used by the stringizing operator or token pasting operator, `__COUNTER__` should not be incremented. This is the
 current behavior on all compilers tested on compiler explorer.
 
@@ -416,27 +429,28 @@ CONCAT2(__COUNTER__) // A__COUNTER__ 1
 __COUNTER__ // 2
 ```
 
+## Literal Form
+
+Matching [[N3457]], the expansion of `__COUNTER__` produces an integer literal with no digit separators whose value is
+representable as `long int`. Digit separators are excluded so that `##` concatenation with a preceding identifier
+always produces a valid identifier token. [[N3457]] recommends that implementations ensure all expansions produce
+literals of the same type (e.g. by appending the suffix `L`) or diagnose when the type changes.
+
+## Library Usage
+
+Standard library headers or macros defined by them may internally expand `__COUNTER__`. Whether such expansions occur is
+unspecified. This matches [[N3457]]'s wording.
+
 ## Range and Overflow
 
 `__COUNTER__` is implemented with an `unsigned` counter in GCC and Clang and both implementations wrap around to zero
-when that counter overflows. This paper recommends `__COUNTER__` shall be able to attain a value of at
-least <nobr>2<sup>32</sup> - 1</nobr> with an error on overflow.
+when that counter overflows. This paper specifies that the number of expansions of `__COUNTER__` in a translation unit
+shall not exceed 2147483647, otherwise the program is ill-formed. This limit aligns with the `__LINE__` / `#line`
+directive limit of 2147483647 per [cpp.line/3] and matches [[N3457]].
 
 # Proposed Wording
 
 Proposed wording relative to [[!N4950]]:
-
-Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/lex.icon">[lex.icon]</a>:
-
-<blockquote>
-    <pre>
-        <ins>
-        decimal-digit-sequence:
-            digit
-            decimal-digit-sequence digit
-        </ins>
-    </pre>
-</blockquote>
 
 Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 3:
 
@@ -445,10 +459,21 @@ Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.
         <li>
             <ins>
                 `__COUNTER__`<br/>
-                A *decimal-digit-sequence* representing the value of a preprocessor-internal counter. The value of the
-                counter starts at `0` and is incremented by `1` each time the `__COUNTER__` macro is expanded. The
-                counter shall have a maximum value of at least <nobr>2<sup>32</sup> - 1</nobr></nobr>. If the value of
-                the counter exceeds its implementation-defined maximum value the program is ill-formed.
+                The expansion of `__COUNTER__` produces an *integer-literal* not containing digit separators. The
+                produced *integer-literal* is such that concatenation with a preceding *identifier* token using the `##`
+                operator (<nobr>[cpp.concat]</nobr>) results in an *identifier* token, and such that when
+                interpreted the value is representable as `long int`. The value of the first expansion in a
+                translation unit is `0`, and each subsequent expansion produces a value one greater than the
+                previous.<br/>
+                <br/>
+                It is unspecified whether the inclusion of standard library headers or invocation of macros defined by
+                them results in expansions of `__COUNTER__`.<br/>
+                <br/>
+                The number of expansions of `__COUNTER__` in a translation unit shall not exceed 2147483647.<br/>
+                <br/>
+                Recommended practice: Implementations should either diagnose when an expansion of `__COUNTER__` produces
+                a literal of a different type than the previous expansion, or ensure all resulting integer literals have
+                the same type, for example by including a literal suffix.
             </ins>
         </li>
     </ul>
@@ -467,8 +492,9 @@ Update the second bullet in <a href="https://timsong-cpp.github.io/cppwp/n4950/c
     <ul>
         <li>
             Otherwise, the replacement preprocessing tokens are the preprocessing tokens of corresponding argument after
-            all macros contained therein have been expanded. <ins>This expansion shall be observed to occur no more than
-            once per argument.</ins> The argument's preprocessing tokens are completely macro replaced before being
+            all macros contained therein have been expanded<ins>, where for each such parameter this expansion is
+            performed exactly once and then preprocessing tokens naming the parameter are each replaced with the
+            resulting token list</ins>. The argument's preprocessing tokens are completely macro replaced before being
             substituted as if they formed the rest of the preprocessing file with no other preprocessing tokens being
             available.
         </li>
@@ -488,6 +514,10 @@ Update the second bullet in <a href="https://timsong-cpp.github.io/cppwp/n4950/c
     "N3227": {
         "title": "Draft Minutes for 22–26 January, 2024",
         "href": "https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm"
+    },
+    "N3457": {
+        "title": "__COUNTER__",
+        "href": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3457.htm"
     }
 }
 </pre>
