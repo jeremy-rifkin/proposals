@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>P3384R0: __COUNTER__</title>
+  <title>P3384R1: __COUNTER__</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1561,10 +1561,11 @@ Possible extra rowspan handling
     blockquote c-[vi] { color: inherit; } /* Name.Variable.Instance */
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
-  <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
-  <link href="https://isocpp.org/files/papers/P3384R0.html" rel="canonical">
+  <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
+  <link href="https://isocpp.org/files/papers/P3384R1.html" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="4756598e11aa382f9374b4437a4e9d49dfbd8103" name="document-revision">
+  <meta content="d0aba41b8c3630dc81942123b3c3177d6982ca6a" name="revision">
+  <meta content="dark light" name="color-scheme">
 <style>
 table, th, td {
     border: none;
@@ -1661,7 +1662,6 @@ pre .property::before, pre .property::after {
 }
 </style>
 <style>/* Boilerplate: style-colors */
-
 /* Any --*-text not paired with a --*-bg is assumed to have a transparent bg */
 :root {
     color-scheme: light dark;
@@ -1901,7 +1901,7 @@ body {
 }
 .invalid.example:not(.no-marker)::before,
 .illegal.example:not(.no-marker)::before {
-    content: "Invalid Example" counter(example);
+    content: "Invalid Example " counter(example);
 }
 
 figcaption {
@@ -1931,7 +1931,6 @@ a[href].issue-return {
 }
 </style>
 <style>/* Boilerplate: style-selflinks */
-
 :root {
     --selflink-text: white;
     --selflink-bg: gray;
@@ -1991,7 +1990,6 @@ a.self-link::before            { content: "¶"; }
 dfn > a.self-link::before      { content: "#"; }
 </style>
 <style>/* Boilerplate: style-syntax-highlighting */
-
 code.highlight { padding: .1em; border-radius: .3em; }
 pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em 0; overflow: auto; border-radius: 0; }
 
@@ -2048,7 +2046,6 @@ c-[vc] { color: #0077aa } /* Name.Variable.Class */
 c-[vg] { color: #0077aa } /* Name.Variable.Global */
 c-[vi] { color: #0077aa } /* Name.Variable.Instance */
 c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
-
 
 @media (prefers-color-scheme: dark) {
     .highlight:not(.idl) { background: rgba(255, 255, 255, .05); }
@@ -2116,14 +2113,17 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="p-name no-ref allcaps" id="title">P3384R0<br><code class="highlight"><c- n>__COUNTER__</c-></code></h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Published Proposal, <time class="dt-updated" datetime="2024-09-03">2024-09-03</time></span></h2>
+   <h1 class="allcaps no-ref p-name" id="title">P3384R1<br><code class="highlight"><c- n>__COUNTER__</c-></code></h1>
+   <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Published Proposal,
+    <time class="dt-updated" datetime="2025-03-21">2025-03-21</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
-     <dd><a class="u-url" href="https://isocpp.org/files/papers/P3384R0.html">https://isocpp.org/files/papers/P3384R0.html</a>
+     <dd><a class="u-url" href="https://isocpp.org/files/papers/P3384R1.html">https://isocpp.org/files/papers/P3384R1.html</a>
      <dt class="editor">Author:
-     <dd class="editor p-author h-card vcard"><span class="p-name fn">Jeremy Rifkin</span>
+     <dd class="editor h-card p-author vcard"><a class="email fn p-name u-email" href="mailto:jeremy@rifkin.dev">Jeremy Rifkin</a>
+     <dt>Audience:
+     <dd>EWG
      <dt>Project:
      <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
      <dt>Source:
@@ -2134,39 +2134,45 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <hr title="Separator for header">
   </div>
   <div class="p-summary" data-fill-with="abstract">
-   <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
+   <h2 class="heading no-num no-ref no-toc settled" id="abstract"><span class="content">Abstract</span></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> is a predefined macro provided as a language extension by all major C and C++ implementations.
-
-          This paper aims to standardize existing practices.</p>
+This paper aims to standardize existing practices and match WG14’s adoption of <code class="highlight"><c- n>__COUNTER__</c-></code> for C2Y.</p>
   </div>
   <nav data-fill-with="table-of-contents" id="toc">
-   <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
-   <ol class="toc" role="directory">
-    <li><a href="#introduction"><span class="secno">1</span> <span class="content">Introduction</span></a>
-    <li><a href="#previous-proposals"><span class="secno">2</span> <span class="content">Previous Proposals</span></a>
-    <li><a href="#rationale-for-standardization"><span class="secno">3</span> <span class="content">Rationale for Standardization</span></a>
-    <li><a href="#motivating-examples"><span class="secno">4</span> <span class="content">Motivating Examples</span></a>
-    <li><a href="#implementation-support"><span class="secno">5</span> <span class="content">Implementation Support</span></a>
+   <h2 class="no-num no-ref no-toc" id="contents">Table of Contents</h2>
+   <ol class="toc">
     <li>
-     <a href="#design-considerations"><span class="secno">6</span> <span class="content">Design Considerations</span></a>
+     <a href="#revision-history"><span class="secno">1</span> <span class="content">Revision History</span></a>
      <ol class="toc">
-      <li><a href="#precompiled-headers"><span class="secno">6.1</span> <span class="content">Precompiled Headers</span></a>
-      <li><a href="#modules"><span class="secno">6.2</span> <span class="content">Modules</span></a>
+      <li><a href="#r1"><span class="secno">1.1</span> <span class="content">R1</span></a>
+     </ol>
+    <li><a href="#introduction"><span class="secno">2</span> <span class="content">Introduction</span></a>
+    <li><a href="#previous-proposals"><span class="secno">3</span> <span class="content">Previous Proposals</span></a>
+    <li><a href="#rationale-for-standardization"><span class="secno">4</span> <span class="content">Rationale for Standardization</span></a>
+    <li><a href="#motivating-examples"><span class="secno">5</span> <span class="content">Motivating Examples</span></a>
+    <li><a href="#implementation-support"><span class="secno">6</span> <span class="content">Implementation Support</span></a>
+    <li>
+     <a href="#design-considerations"><span class="secno">7</span> <span class="content">Design Considerations</span></a>
+     <ol class="toc">
+      <li><a href="#precompiled-headers"><span class="secno">7.1</span> <span class="content">Precompiled Headers</span></a>
+      <li><a href="#modules"><span class="secno">7.2</span> <span class="content">Modules</span></a>
       <li>
-       <a href="#odr"><span class="secno">6.3</span> <span class="content">ODR</span></a>
+       <a href="#odr"><span class="secno">7.3</span> <span class="content">ODR</span></a>
        <ol class="toc">
-        <li><a href="#possible-solutions"><span class="secno">6.3.1</span> <span class="content">Possible Solutions</span></a>
+        <li><a href="#possible-solutions"><span class="secno">7.3.1</span> <span class="content">Possible Solutions</span></a>
         <li>
-         <a href="#proposed-solution"><span class="secno">6.3.2</span> <span class="content">Proposed Solution</span></a>
+         <a href="#proposed-solution"><span class="secno">7.3.2</span> <span class="content">Proposed Solution</span></a>
          <ol class="toc">
-          <li><a href="#is-__counter__-still-needed"><span class="secno">6.3.2.1</span> <span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span></a>
+          <li><a href="#is-__counter__-still-needed"><span class="secno">7.3.2.1</span> <span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span></a>
          </ol>
        </ol>
-      <li><a href="#evaluation-order-and-caching"><span class="secno">6.4</span> <span class="content">Evaluation Order and Caching</span></a>
-      <li><a href="#argument-handling"><span class="secno">6.5</span> <span class="content">Argument Handling</span></a>
-      <li><a href="#range-and-overflow"><span class="secno">6.6</span> <span class="content">Range and Overflow</span></a>
+      <li><a href="#evaluation-order-and-caching"><span class="secno">7.4</span> <span class="content">Evaluation Order and Caching</span></a>
+      <li><a href="#argument-handling"><span class="secno">7.5</span> <span class="content">Argument Handling</span></a>
+      <li><a href="#literal-form"><span class="secno">7.6</span> <span class="content">Literal Form</span></a>
+      <li><a href="#library-usage"><span class="secno">7.7</span> <span class="content">Library Usage</span></a>
+      <li><a href="#range-and-overflow"><span class="secno">7.8</span> <span class="content">Range and Overflow</span></a>
      </ol>
-    <li><a href="#proposed-wording"><span class="secno">7</span> <span class="content">Proposed Wording</span></a>
+    <li><a href="#proposed-wording"><span class="secno">8</span> <span class="content">Proposed Wording</span></a>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
@@ -2176,20 +2182,31 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </ol>
   </nav>
   <main>
-   <h2 class="heading settled" data-level="1" id="introduction"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
+   <h2 class="heading settled" data-level="1" id="revision-history"><span class="secno">1. </span><span class="content">Revision History</span><a class="self-link" href="#revision-history"></a></h2>
+   <h3 class="heading settled" data-level="1.1" id="r1"><span class="secno">1.1. </span><span class="content">R1</span><a class="self-link" href="#r1"></a></h3>
+   <ul>
+    <li data-md>
+     <p>Updated to reflect <code class="highlight"><c- n>__COUNTER__</c-></code> has been accepted by WG14</p>
+    <li data-md>
+     <p>Updated wording to match <a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a></p>
+   </ul>
+   <h2 class="heading settled" data-level="2" id="introduction"><span class="secno">2. </span><span class="content">Introduction</span><a class="self-link" href="#introduction"></a></h2>
    <p>The <code class="highlight"><c- n>__COUNTER__</c-></code> predefined macro is a common language extension for C and C++ which expands to an integer literal
 that starts at <code class="highlight"><c- mi>0</c-></code> and increments by <code class="highlight"><c- mi>1</c-></code> every time it is expanded in a translation unit. This is useful for generating
 unique identifiers, generating unique indices, and other preprocessor metaprogramming uses.</p>
-   <h2 class="heading settled" data-level="2" id="previous-proposals"><span class="secno">2. </span><span class="content">Previous Proposals</span><a class="self-link" href="#previous-proposals"></a></h2>
+   <h2 class="heading settled" data-level="3" id="previous-proposals"><span class="secno">3. </span><span class="content">Previous Proposals</span><a class="self-link" href="#previous-proposals"></a></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> has not been proposed to WG21, however, it was briefly mentioned previously in a WG14 paper, <em>Extensions
 to the preprocessor for C2Y</em> <a data-link-type="biblio" href="#biblio-n3190" title="Extensions to the preprocessor for C2Y">[N3190]</a>. The meeting minutes, <a data-link-type="biblio" href="#biblio-n3227" title="Draft Minutes for 22–26 January, 2024">[N3227]</a>, mention brief discussion of <code class="highlight"><c- n>__COUNTER__</c-></code>’s
 implications on evaluation order and caching. No polls were taken on <a data-link-type="biblio" href="#biblio-n3190" title="Extensions to the preprocessor for C2Y">[N3190]</a>.</p>
+   <p><a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a>, which provides a focused proposal on <code class="highlight"><c- n>__COUNTER__</c-></code> for C, has been accepted by WG14 into C2Y. Given the
+shared preprocessor between C and C++, this paper follows accepted WG14 wording.</p>
    <p>This paper provides a focused proposal on <code class="highlight"><c- n>__COUNTER__</c-></code> and aims to provide additional context and motivation.</p>
-   <h2 class="heading settled" data-level="3" id="rationale-for-standardization"><span class="secno">3. </span><span class="content">Rationale for Standardization</span><a class="self-link" href="#rationale-for-standardization"></a></h2>
+   <h2 class="heading settled" data-level="4" id="rationale-for-standardization"><span class="secno">4. </span><span class="content">Rationale for Standardization</span><a class="self-link" href="#rationale-for-standardization"></a></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> is de-facto portable today. Every major implementation supports it with unsurprising semantics. However,
 there is inherent uncertainty surrounding its portability and semantics due to it not being standardized.</p>
-   <p>Codebases striving for maximum portability must resort to detection and fallback such as this example from <a href="https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538">google benchmark</a>:</p>
-<pre class="language-cpp highlight"><c- c1>// Check that __COUNTER__ is defined and that __COUNTER__ increases by 1</c->
+   <p>Codebases striving for maximum portability must resort to detection and fallback such as this example from
+<a href="https://github.com/google/benchmark/blob/c19cfee61e136effb05a7fc8a037b0db3b13bd4c/include/benchmark/benchmark.h#L1531-L1538">google benchmark</a>:</p>
+<pre class="highlight language-cpp"><c- c1>// Check that __COUNTER__ is defined and that __COUNTER__ increases by 1</c->
 <c- c1>// every time it is expanded. X + 1 == X + 0 is used in case X is defined to be</c->
 <c- c1>// empty. If X is empty the expression becomes (+1 == +0).</c->
 <c- cp>#if defined(__COUNTER__) &amp;&amp; (__COUNTER__ + 1 == __COUNTER__ + 0)</c->
@@ -2199,15 +2216,17 @@ there is inherent uncertainty surrounding its portability and semantics due to i
 <c- cp>#endif</c->
 </pre>
    <p>Meanwhile other C++ codebases avoid the macro altogether due to this uncertainty. In the absence of cautious checking
-and fallback, a developer must consult numerous widely used C++ implementations to convince themselves that <code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
+and fallback, a developer must consult numerous widely used C++ implementations to convince themselves that
+<code class="highlight"><c- n>__COUNTER__</c-></code> exists and does what they want.</p>
    <p>In the case of google benchmark, <code class="highlight"><c- n>__LINE__</c-></code> is an adequate fallback due to how <code class="highlight"><c- n>BENCHMARK</c-></code> macros are typically used.
-However, this is not an adaquate general-purpose replacement due to it not being unique in the general case.</p>
+However, this is not an adequate general-purpose replacement due to it not being unique in the general case.</p>
    <p>While every major C++ compiler today supports <code class="highlight"><c- n>__COUNTER__</c-></code>, it’s not always enabled. For example, EDG only provides it
 outside of standards mode.</p>
-   <p>Additionally, minor divergences in <code class="highlight"><c- n>__COUNTER__</c-></code> semantics are observable (see <a href="#argument-handling">§ 6.5 Argument Handling</a>), though they do
+   <p>Additionally, minor divergences in <code class="highlight"><c- n>__COUNTER__</c-></code> semantics are observable (see <a href="#argument-handling">§ 7.5 Argument Handling</a>), though they do
 not impact most use cases.</p>
-   <p>Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of <code class="highlight"><c- n>__COUNTER__</c-></code> into the official standard in order to provide more clear portability and semantic guarantees.</p>
-   <h2 class="heading settled" data-level="4" id="motivating-examples"><span class="secno">4. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
+   <p>Due to fairly widespread use, both in C and C++, it would be useful to incorporate the existing practice of
+<code class="highlight"><c- n>__COUNTER__</c-></code> into the official standard in order to provide more clear portability and semantic guarantees.</p>
+   <h2 class="heading settled" data-level="5" id="motivating-examples"><span class="secno">5. </span><span class="content">Motivating Examples</span><a class="self-link" href="#motivating-examples"></a></h2>
    <p>A brief survey of some uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the C and C++ community:</p>
    <p><strong>C++:</strong></p>
    <ul>
@@ -2249,13 +2268,13 @@ not impact most use cases.</p>
     <li data-md>
      <p>Yabai, a macOS window manager, uses <code class="highlight"><c- n>__COUNTER__</c-></code> for unique indices in timing utilities; <a href="https://github.com/koekeishiya/yabai/blob/a4062be1d28c54489400d8b84175fba271423497/src/misc/timer.h#L136-L142">link</a></p>
     <li data-md>
-     <p>Drgn, a programmable debugger, uses <code class="highlight"><c- n>__COUNTER__</c-></code> for unique identifiers througout the codebase; <a href="https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222">link</a></p>
+     <p>Drgn, a programmable debugger, uses <code class="highlight"><c- n>__COUNTER__</c-></code> for unique identifiers throughout the codebase; <a href="https://github.com/osandov/drgn/blob/2ee0c975580e428d3b5979919086f177d7a18d70/libdrgn/pp.h#L222">link</a></p>
     <li data-md>
      <p>Metric Panda Games uses <code class="highlight"><c- n>__COUNTER__</c-></code> for <a href="https://www.metricpanda.com/rival-fortress-update-39-how-i-use-__counter__-to-localize-text-and-hash-strings-at-compile-time/">lookup tables</a> as part of a localization and compile-time string hashing system.</p>
    </ul>
    <p>Many additional uses include use for static assertions, however, that use case is now covered by built-in static
 assertion facilities.</p>
-   <h2 class="heading settled" data-level="5" id="implementation-support"><span class="secno">5. </span><span class="content">Implementation Support</span><a class="self-link" href="#implementation-support"></a></h2>
+   <h2 class="heading settled" data-level="6" id="implementation-support"><span class="secno">6. </span><span class="content">Implementation Support</span><a class="self-link" href="#implementation-support"></a></h2>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> has long been supported by all major implementations of C and C++:</p>
    <table>
     <thead>
@@ -2330,15 +2349,15 @@ assertion facilities.</p>
       <td>0.6.0 ✔️
    </table>
    <p>Comparison: <a href="https://godbolt.org/z/Mx4MznMaY">https://godbolt.org/z/Mx4MznMaY</a></p>
-   <h2 class="heading settled" data-level="6" id="design-considerations"><span class="secno">6. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
-   <h3 class="heading settled" data-level="6.1" id="precompiled-headers"><span class="secno">6.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
+   <h2 class="heading settled" data-level="7" id="design-considerations"><span class="secno">7. </span><span class="content">Design Considerations</span><a class="self-link" href="#design-considerations"></a></h2>
+   <h3 class="heading settled" data-level="7.1" id="precompiled-headers"><span class="secno">7.1. </span><span class="content">Precompiled Headers</span><a class="self-link" href="#precompiled-headers"></a></h3>
    <p>MSVC and GCC save the state of <code class="highlight"><c- n>__COUNTER__</c-></code> in precompiled headers. GCC notes that the <code class="highlight"><c- n>__COUNTER__</c-></code> macro must not be
 expanded prior to inclusion of a pre-compiled header. If it is, then the precompiled header is not used.</p>
    <p>This paper proposes no requirements for <code class="highlight"><c- n>__COUNTER__</c-></code> behavior surrounding pre-compiled headers.</p>
-   <h3 class="heading settled" data-level="6.2" id="modules"><span class="secno">6.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
+   <h3 class="heading settled" data-level="7.2" id="modules"><span class="secno">7.2. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h3>
    <p>GCC and MSVC do not propagate <code class="highlight"><c- n>__COUNTER__</c-></code> across modules, including for header units. The following compiles with a
 linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-></code>:</p>
-<pre class="language-cpp highlight"><c- c1>// header.hpp</c->
+<pre class="highlight language-cpp"><c- c1>// header.hpp</c->
 <c- cp>#define CONCAT_IMPL(x, y) x##y</c->
 <c- cp>#define CONCAT(x, y) CONCAT_IMPL(x, y)</c->
 <c- cp>#define NEW_VAR(name) CONCAT(name, __COUNTER__)</c->
@@ -2350,13 +2369,13 @@ linker error due to multiple definitions of <code class="highlight"><c- n>x0</c-
 <c- b>int</c-> <c- n>NEW_VAR</c-><c- p>(</c-><c- n>x</c-><c- p>);</c-> <c- c1>// x0</c->
 </pre>
    <p>There are similar concerns with <code class="highlight"><c- n>__TIME__</c-></code> and <code class="highlight"><c- n>__DATE__</c-></code> macros surrounding header units, though the potential for
-problems is less pronounced. One option would to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no
+problems is less pronounced. One option would be to disallow the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> in header units, however, no
 such restriction is proposed in this paper.</p>
    <p>This paper proposes no change to the current behavior. Other behaviors would introduce additional complexity without
 clear benefit.</p>
-   <h3 class="heading settled" data-level="6.3" id="odr"><span class="secno">6.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
+   <h3 class="heading settled" data-level="7.3" id="odr"><span class="secno">7.3. </span><span class="content">ODR</span><a class="self-link" href="#odr"></a></h3>
    <p>It’s possible to inadvertently violate ODR with <code class="highlight"><c- n>__COUNTER__</c-></code>:</p>
-<pre class="language-cpp highlight"><c- c1>// foo.hpp</c->
+<pre class="highlight language-cpp"><c- c1>// foo.hpp</c->
 <c- cp>#define CONCAT_IMPL(x, y) x##y</c->
 <c- cp>#define CONCAT(x, y) CONCAT_IMPL(x, y)</c->
 <c- cp>#define NEW_VAR(name) CONCAT(name, __COUNTER__)</c->
@@ -2376,7 +2395,7 @@ ODR diagnostics. Similar ODR issues can occur as a result of <code class="highli
 these ODR issues exist, it is worthwhile looking at possible solutions to the problem.</p>
    <p>N.b.: Similar considerations exist for C, however, different <code class="highlight"><c- kr>inline</c-></code> function definitions can only result in
 unspecified behavior.</p>
-   <h4 class="heading settled" data-level="6.3.1" id="possible-solutions"><span class="secno">6.3.1. </span><span class="content">Possible Solutions</span><a class="self-link" href="#possible-solutions"></a></h4>
+   <h4 class="heading settled" data-level="7.3.1" id="possible-solutions"><span class="secno">7.3.1. </span><span class="content">Possible Solutions</span><a class="self-link" href="#possible-solutions"></a></h4>
    <p>This is a difficult problem to solve due to the nature of <code class="highlight"><c- n>__COUNTER__</c-></code> and how the preprocessor interacts with the rest
 of the language. Possible solutions include:</p>
    <ul>
@@ -2392,7 +2411,7 @@ of the language. Possible solutions include:</p>
      <p>Some sort of deterministic <code class="highlight"><c- n>__UUID__</c-></code> or <code class="highlight"><c- n>__UNIQUE__</c-></code> macro that is tied to the file and line</p>
    </ul>
    <p>Most of these would not be practical, would add boilerplate, or would introduce substantial complexity.</p>
-   <h4 class="heading settled" data-level="6.3.2" id="proposed-solution"><span class="secno">6.3.2. </span><span class="content">Proposed Solution</span><a class="self-link" href="#proposed-solution"></a></h4>
+   <h4 class="heading settled" data-level="7.3.2" id="proposed-solution"><span class="secno">7.3.2. </span><span class="content">Proposed Solution</span><a class="self-link" href="#proposed-solution"></a></h4>
    <p>This paper proposes no fundamental changes to existing <code class="highlight"><c- n>__COUNTER__</c-></code> functionality or language semantics. Instead,
 unique identifiers for variables in header-<code class="highlight"><c- kr>inline</c-></code> functions should be solved by:</p>
    <ol>
@@ -2403,12 +2422,12 @@ unique identifiers for variables in header-<code class="highlight"><c- kr>inline
    </ol>
    <p>This proposal does not preclude additional functionality or other approaches to make <code class="highlight"><c- n>__COUNTER__</c-></code> more ODR-friendly at
 a later time.</p>
-   <h5 class="heading settled" data-level="6.3.2.1" id="is-__counter__-still-needed"><span class="secno">6.3.2.1. </span><span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span><a class="self-link" href="#is-__counter__-still-needed"></a></h5>
+   <h5 class="heading settled" data-level="7.3.2.1" id="is-__counter__-still-needed"><span class="secno">7.3.2.1. </span><span class="content">Is <code class="highlight"><c- n>__COUNTER__</c-></code> still needed?</span><a class="self-link" href="#is-__counter__-still-needed"></a></h5>
    <p><code class="highlight"><c- n>_</c-></code> is largely sufficient for uses of <code class="highlight"><c- n>__COUNTER__</c-></code> in the case of local identifiers, however, it does not cover
 use-cases of <code class="highlight"><c- n>__COUNTER__</c-></code> in namespace-scoped identifiers or other preprocessor metaprogramming uses.</p>
    <p>As an example of use of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond local identifiers google benchmark uses uniquely-named identifiers at
 namespace-scope to register benchmark functions:</p>
-<pre class="language-cpp highlight"><c- c1>// after preprocessor expansion:</c->
+<pre class="highlight language-cpp"><c- c1>// after preprocessor expansion:</c->
 <c- k>static</c-> <c- o>::</c-><c- n>benchmark</c-><c- o>::</c-><c- n>internal</c-><c- o>::</c-><c- n>Benchmark</c-><c- o>*</c-> <c- n>_benchmark_2FooBar</c-> <c- n>__attribute__</c-><c- p>((</c-><c- n>unused</c-><c- p>))</c-> <c- o>=</c->
     <c- p>(</c->
         <c- o>::</c-><c- n>benchmark</c-><c- o>::</c-><c- n>internal</c-><c- o>::</c-><c- n>RegisterBenchmarkInternal</c-><c- p>(</c->
@@ -2421,21 +2440,23 @@ benchmark does not rely on <code class="highlight"><c- n>_benchmark_2FooBar</c->
 an object is managed and possibly needs to be destructed at the end of a program, using a namespace-scoped variable
 consolidates the constructor and destructor logic around an object, rather than managing the object between free
 functions and a variable. I.e.:</p>
-<pre class="language-cpp highlight"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>Foo</c-><c- o>></c-> <c- n>obj</c-><c- p>;</c->
+<pre class="highlight language-cpp"><c- n>std</c-><c- o>::</c-><c- n>optional</c-><c- o>&lt;</c-><c- n>Foo</c-><c- o>></c-> <c- n>obj</c-><c- p>;</c->
 <c- n>__attribute__</c-><c- p>((</c-><c- n>constructor</c-><c- p>))</c-> <c- b>void</c-> <c- n>obj_setup</c-><c- p>()</c-> <c- p>{</c->
     <c- n>obj</c-> <c- o>=</c-> <c- n>setup_foo</c-><c- p>();</c->
 <c- p>}</c->
 <c- d>/* possibly a destructor too */</c->
 </pre>
-   <p>vs:</p>
-<pre class="language-cpp highlight"><c- n>Foo</c-> <c- n>obj</c-> <c- o>=</c-> <c- n>setup_foo</c-><c- p>();</c->
+   
+vs:
+
+<pre class="highlight language-cpp"><c- n>Foo</c-> <c- n>obj</c-> <c- o>=</c-> <c- n>setup_foo</c-><c- p>();</c->
 <c- d>/* or some raii-wrapper around Foo if additional destruction logic is needed beyond normal */</c->
 </pre>
    <p>While <code class="highlight"><c- n>_</c-></code> covers many uses of <code class="highlight"><c- n>__COUNTER__</c-></code>, the preprocessor utility continues to be useful due to existing practice,
 uses outside local identifiers, other preprocessor metaprogramming uses of <code class="highlight"><c- n>__COUNTER__</c-></code> beyond unique identifiers.
-Additionally, because of interest in avoiding divergence in the shared preprocessor, its use in C in an important
+Additionally, because of interest in avoiding divergence in the shared preprocessor, its use in C is an important
 consideration.</p>
-   <h3 class="heading settled" data-level="6.4" id="evaluation-order-and-caching"><span class="secno">6.4. </span><span class="content">Evaluation Order and Caching</span><a class="self-link" href="#evaluation-order-and-caching"></a></h3>
+   <h3 class="heading settled" data-level="7.4" id="evaluation-order-and-caching"><span class="secno">7.4. </span><span class="content">Evaluation Order and Caching</span><a class="self-link" href="#evaluation-order-and-caching"></a></h3>
    <p>Meeting notes for <a data-link-type="biblio" href="#biblio-n3190" title="Extensions to the preprocessor for C2Y">[N3190]</a> mention brief discussion of <code class="highlight"><c- n>__COUNTER__</c-></code> making evaluation order and caching observable,
 possibly leading to divergence between compiler test cases <a data-link-type="biblio" href="#biblio-n3227" title="Draft Minutes for 22–26 January, 2024">[N3227]</a>.</p>
    <p>The evaluation order consideration is similar to existing expression evaluation order observability. Experience from
@@ -2443,34 +2464,36 @@ existing practice has shown this doesn’t pose a substantial concern or footgun
 typical use for <code class="highlight"><c- n>__COUNTER__</c-></code>, which is unique identifiers/indices. When it comes to caching, a conforming
 implementation would need to take care to not cache macro expansions involving <code class="highlight"><c- n>__COUNTER__</c-></code>.</p>
    <p>This paper proposes no change to the current behavior.</p>
-   <h3 class="heading settled" data-level="6.5" id="argument-handling"><span class="secno">6.5. </span><span class="content">Argument Handling</span><a class="self-link" href="#argument-handling"></a></h3>
-   <p>If passed as an argument to a function-like macro, multiple expansions of an argument including <code class="highlight"><c- n>__COUNTER__</c-></code> should
-expand to the same token sequence. This paper proposes the following case should produce <code class="highlight"><c- mi>0</c-> <c- mi>0</c-></code>. This is the current
-behavior on all compilers tested on Compiler Explorer except Chibicc, which produces <code class="highlight"><c- mi>0</c-> <c- mi>1</c-></code>.</p>
-<pre class="language-c highlight"><c- cp>#define X(Z) Z Z</c->
+   <h3 class="heading settled" data-level="7.5" id="argument-handling"><span class="secno">7.5. </span><span class="content">Argument Handling</span><a class="self-link" href="#argument-handling"></a></h3>
+   <p>If passed as an argument to a function-like macro, the argument is expanded exactly once and then preprocessing tokens
+naming the parameter are each replaced with the resulting token sequence. This paper proposes the following case should
+produce <code class="highlight"><c- mi>0</c-> <c- mi>0</c-></code>. This is the current behavior on all compilers tested on Compiler Explorer except Chibicc, which produces
+<code class="highlight"><c- mi>0</c-> <c- mi>1</c-></code>.</p>
+<pre class="highlight language-c"><c- cp>#define X(Z) Z Z</c->
 <c- n>X</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c-> <c- c1>// 0 0</c->
 </pre>
    <p>In the case of an unused argument, <code class="highlight"><c- n>__COUNTER__</c-></code> will not be expanded and will not result in an increment. This is the
 current behavior for all compilers tested on Compiler Explorer.</p>
-<pre class="language-c highlight"><c- cp>#define FOO(X)</c->
+<pre class="highlight language-c"><c- cp>#define FOO(X)</c->
 <c- n>FOO</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c->
 <c- n>__COUNTER__</c-> <c- c1>// 0</c->
 </pre>
    <p>Additionally in the case of <code class="highlight"><c- n>__VA_OPT__</c-></code> but no use of <code class="highlight"><c- n>__VA_ARGS__</c-></code>, an expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> and subsequent
 increment should occur. Currently, Clang diverges from MSVC and GCC in the following example. It produces <code class="highlight"><c- mi>0</c-></code> while the
 others produce <code class="highlight"><c- mi>1</c-></code>:</p>
-<pre class="language-c highlight"><c- cp>#define X(...) __VA_OPT__()</c->
+<pre class="highlight language-c"><c- cp>#define X(...) __VA_OPT__()</c->
 <c- n>X</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c->
 <c- n>__COUNTER__</c-> <c- c1>// 1</c->
 </pre>
    <p>Notably, Clang produces the desired output in the following example:</p>
-<pre class="language-c highlight"><c- cp>#define X(...) __VA_OPT__(a)</c->
+<pre class="highlight language-c"><c- cp>#define X(...) __VA_OPT__(a)</c->
 <c- n>X</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c->
 <c- n>__COUNTER__</c-> <c- c1>// 1</c->
 </pre>
+   <p>The proposed wording does not address this <code class="highlight"><c- n>__VA_OPT__</c-></code> corner case and it remains an area of implementation divergence.</p>
    <p>If used by the stringizing operator or token pasting operator, <code class="highlight"><c- n>__COUNTER__</c-></code> should not be incremented. This is the
 current behavior on all compilers tested on compiler explorer.</p>
-<pre class="language-c highlight"><c- cp>#define STR(X) #X</c->
+<pre class="highlight language-c"><c- cp>#define STR(X) #X</c->
 <c- n>STR</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c-> <c- c1>// "__COUNTER__"</c->
 <c- cp>#define CONCAT(X) A##X</c->
 <c- n>CONCAT</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c-> <c- c1>// A__COUNTER__</c->
@@ -2479,49 +2502,71 @@ current behavior on all compilers tested on compiler explorer.</p>
 <c- n>CONCAT2</c-><c- p>(</c-><c- n>__COUNTER__</c-><c- p>)</c-> <c- c1>// A__COUNTER__ 1</c->
 <c- n>__COUNTER__</c-> <c- c1>// 2</c->
 </pre>
-   <h3 class="heading settled" data-level="6.6" id="range-and-overflow"><span class="secno">6.6. </span><span class="content">Range and Overflow</span><a class="self-link" href="#range-and-overflow"></a></h3>
+   <h3 class="heading settled" data-level="7.6" id="literal-form"><span class="secno">7.6. </span><span class="content">Literal Form</span><a class="self-link" href="#literal-form"></a></h3>
+   <p>Matching <a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a>, the expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> produces an integer literal with no digit separators whose value is
+representable as <code class="highlight"><c- b>long</c-> <c- b>int</c-></code>. Digit separators are excluded so that <code class="highlight"><c- cp>##</c-></code> concatenation with a preceding identifier
+always produces a valid identifier token. <a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a> recommends that implementations ensure all expansions produce
+literals of the same type (e.g. by appending the suffix <code class="highlight"><c- n>L</c-></code>) or diagnose when the type changes.</p>
+   <h3 class="heading settled" data-level="7.7" id="library-usage"><span class="secno">7.7. </span><span class="content">Library Usage</span><a class="self-link" href="#library-usage"></a></h3>
+   <p>Standard library headers or macros defined by them may internally expand <code class="highlight"><c- n>__COUNTER__</c-></code>. Whether such expansions occur is
+unspecified. This matches <a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a>’s wording.</p>
+   <h3 class="heading settled" data-level="7.8" id="range-and-overflow"><span class="secno">7.8. </span><span class="content">Range and Overflow</span><a class="self-link" href="#range-and-overflow"></a></h3>
    <p><code class="highlight"><c- n>__COUNTER__</c-></code> is implemented with an <code class="highlight"><c- b>unsigned</c-></code> counter in GCC and Clang and both implementations wrap around to zero
-when that counter overflows. This paper recommends <code class="highlight"><c- n>__COUNTER__</c-></code> shall be able to attain a value of at
-least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error on overflow.</p>
-   <h2 class="heading settled" data-level="7" id="proposed-wording"><span class="secno">7. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
+when that counter overflows. This paper specifies that the number of expansions of <code class="highlight"><c- n>__COUNTER__</c-></code> in a translation unit
+shall not exceed 2147483647, otherwise the program is ill-formed. This limit aligns with the <code class="highlight"><c- n>__LINE__</c-></code> / <code class="highlight"><c- cp>#line</c-></code>
+directive limit of 2147483647 per [cpp.line/3] and matches <a data-link-type="biblio" href="#biblio-n3457" title="__COUNTER__">[N3457]</a>.</p>
+   <h2 class="heading settled" data-level="8" id="proposed-wording"><span class="secno">8. </span><span class="content">Proposed Wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>Proposed wording relative to <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>:</p>
-   <p>Insert into <a href="https://timsong-cpp.github.io/cppwp/n4950/lex.icon">[lex.icon]</a>:</p>
-   <blockquote>
-<pre class="highlight"><ins><c- n>decimal</c-><c- o>-</c-><c- n>digit</c-><c- o>-</c-><c- n>sequence</c-><c- o>:</c->
-    <c- n>digit</c->
-    <c- n>decimal</c-><c- o>-</c-><c- n>digit</c-><c- o>-</c-><c- n>sequence</c-> <c- n>digit</c->
-</ins></pre>
-   </blockquote>
    <p>Insert a bullet point in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#1">[cpp.predefined/1]</a> before bullet 3:</p>
    <blockquote>
     <ul>
      <li>
-      <ins> <code class="highlight"><c- n>__COUNTER__</c-></code><br> A <em>decimal-digit-sequence</em> representing the value of a preprocessor-internal counter. The value of the
-                counter starts at <code class="highlight"><c- mi>0</c-></code> and is incremented by <code class="highlight"><c- mi>1</c-></code> each time the <code class="highlight"><c- n>__COUNTER__</c-></code> macro is expanded. The
-                counter shall have a maximum value of at least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span>. If the value of
-                the counter exceeds its implementation-defined maximum value the program is ill-formed. </ins>
+      <ins>
+                <code class="highlight"><c- n>__COUNTER__</c-></code><br>
+                The expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> produces an <em>integer-literal</em> not containing digit separators. The
+                produced <em>integer-literal</em> is such that concatenation with a preceding <em>identifier</em> token using the <code class="highlight"><c- cp>##</c-></code>
+                operator (<span style=";white-space:nowrap">[cpp.concat]</span>) results in an <em>identifier</em> token, and such that when
+                interpreted the value is representable as <code class="highlight"><c- b>long</c-> <c- b>int</c-></code>. The value of the first expansion in a
+                translation unit is <code class="highlight"><c- mi>0</c-></code>, and each subsequent expansion produces a value one greater than the
+                previous.<br>
+                <br>
+                It is unspecified whether the inclusion of standard library headers or invocation of macros defined by
+                them results in expansions of <code class="highlight"><c- n>__COUNTER__</c-></code>.<br>
+                <br>
+                The number of expansions of <code class="highlight"><c- n>__COUNTER__</c-></code> in a translation unit shall not exceed 2147483647.<br>
+                <br>
+                Recommended practice: Implementations should either diagnose when an expansion of <code class="highlight"><c- n>__COUNTER__</c-></code> produces
+                a literal of a different type than the previous expansion, or ensure all resulting integer literals have
+                the same type, for example by including a literal suffix.
+            </ins>
     </ul>
    </blockquote>
    <p>Update <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.predefined#3">[cpp.predefined/3]</a>:</p>
    <blockquote>
-     The values of the predefined macros (except for <code class="highlight"><c- n>__FILE__</c-></code>
+    
+    The values of the predefined macros (except for <code class="highlight"><c- n>__FILE__</c-></code>
     <del> and</del>
     <ins>,</ins>
      <code class="highlight"><c- n>__LINE__</c-></code>
-    <ins>, and <code class="highlight"><c- n>__COUNTER__</c-></code></ins>
-    ) remain constant throughout the translation unit. 
+    <ins>, and
+    <code class="highlight"><c- n>__COUNTER__</c-></code></ins>
+    ) remain constant throughout the translation unit.
+
    </blockquote>
    <p>Update the second bullet in <a href="https://timsong-cpp.github.io/cppwp/n4950/cpp.subst#1">[cpp.subst/1]</a>:</p>
    <blockquote>
     <ul>
      <li>
-       Otherwise, the replacement preprocessing tokens are the preprocessing tokens of corresponding argument after
-            all macros contained therein have been expanded. 
-      <ins>This expansion shall be observed to occur no more than
-            once per argument.</ins>
-       The argument’s preprocessing tokens are completely macro replaced before being
+      
+            Otherwise, the replacement preprocessing tokens are the preprocessing tokens of corresponding argument after
+            all macros contained therein have been expanded
+      <ins>, where for each such parameter this expansion is
+            performed exactly once and then preprocessing tokens naming the parameter are each replaced with the
+            resulting token list</ins>
+      . The argument’s preprocessing tokens are completely macro replaced before being
             substituted as if they formed the rest of the preprocessing file with no other preprocessing tokens being
-            available. 
+            available.
+        
     </ul>
    </blockquote>
   </main>
@@ -2546,7 +2591,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       on = !document.body.classList.contains('toc-sidebar');
     }
 
-    /* Don’t scroll to compensate for the ToC if we’re above it already. */
+    /* Don't scroll to compensate for the ToC if we're above it already. */
     var headY = 0;
     var head = document.querySelector('.head');
     if (head) {
@@ -2577,16 +2622,16 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       }
       if (toggle.matches(':hover')) {
         /* Unfocus button when not using keyboard navigation,
-           because I don’t know where else to send the focus. */
+           because I don't know where else to send the focus. */
         toggle.blur();
       }
     }
   }
 
   function createSidebarToggle() {
-    /* Create the sidebar toggle in JS; it shouldn’t exist when JS is off. */
+    /* Create the sidebar toggle in JS; it shouldn't exist when JS is off. */
     var toggle = document.createElement('a');
-      /* This should probably be a button, but appearance isn’t standards-track.*/
+      /* This should probably be a button, but appearance isn't standards-track.*/
     toggle.id = 'toc-toggle';
     toggle.class = 'toc-toggle';
     toggle.href = '#toc';
@@ -2602,7 +2647,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
     toggle.addEventListener('click', toggler, false);
 
 
-    /* Get <nav id=toc-nav>, or make it if we don’t have one. */
+    /* Get <nav id=toc-nav>, or make it if we don't have one. */
     var tocNav = document.getElementById('toc-nav');
     if (!tocNav) {
       tocNav = document.createElement('p');
@@ -2610,7 +2655,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
       /* Prepend for better keyboard navigation */
       document.body.insertBefore(tocNav, document.body.firstChild);
     }
-    /* While we’re at it, make sure we have a Jump to Toc link. */
+    /* While we're at it, make sure we have a Jump to Toc link. */
     var tocJump = document.getElementById('toc-jump');
     if (!tocJump) {
       tocJump = document.createElement('a');
@@ -2638,7 +2683,7 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
     }, false);
   }
   else {
-    console.warn("Can’t find Table of Contents. Please use <nav id='toc'> around the ToC.");
+    console.warn("Can't find Table of Contents. Please use <nav id='toc'> around the ToC.");
   }
 
   /* Wrap tables in case they overflow */
@@ -2654,18 +2699,20 @@ least <span style=";white-space:nowrap">2<sup>32</sup> - 1</span> with an error 
 
 })();
 </script>
-  <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
-  <h3 class="no-num no-ref heading settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
+  <h2 class="heading no-num no-ref settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
+  <h3 class="heading no-num no-ref settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
   <dl>
    <dt id="biblio-n4950">[N4950]
    <dd>Thomas Köppe. <a href="https://wg21.link/n4950"><cite>Working Draft, Standard for Programming Language C++</cite></a>. 10 May 2023. URL: <a href="https://wg21.link/n4950">https://wg21.link/n4950</a>
   </dl>
-  <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
+  <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
    <dt id="biblio-n3190">[N3190]
    <dd><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3190.htm"><cite>Extensions to the preprocessor for C2Y</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3190.htm">https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3190.htm</a>
    <dt id="biblio-n3227">[N3227]
    <dd><a href="https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm"><cite>Draft Minutes for 22–26 January, 2024</cite></a>. URL: <a href="https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm">https://www9.open-std.org/JTC1/SC22/WG14/www/docs/n3227.htm</a>
+   <dt id="biblio-n3457">[N3457]
+   <dd><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3457.htm"><cite>__COUNTER__</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3457.htm">https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3457.htm</a>
    <dt id="biblio-p2169">[P2169]
    <dd><a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf"><cite>A nice placeholder with no name</cite></a>. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2169r4.pdf</a>
   </dl>
