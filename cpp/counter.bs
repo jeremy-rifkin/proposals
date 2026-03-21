@@ -3,15 +3,15 @@ Title: __COUNTER__
 H1: <code>__COUNTER__</code>
 Group: WG21
 Audience: EWG
-Shortname: D3384
+Shortname: P3384
 Revision: 1
-Status: D
+Status: P
 Date: 2025-03-21
 Editor: Jeremy Rifkin, jeremy@rifkin.dev
 Abstract: `__COUNTER__` is a predefined macro provided as a language extension by all major C and C++ implementations.
           This paper aims to standardize existing practices and match WG14's adoption of `__COUNTER__` for C2Y.
 Markup Shorthands: markdown on
-ED: https://isocpp.org/files/papers/D3384R1.html
+ED: https://isocpp.org/files/papers/P3384R1.html
 !Source: [https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs](https://github.com/jeremy-rifkin/proposals/blob/main/cpp/counter.bs)
 </pre>
 
